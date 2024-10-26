@@ -17,8 +17,8 @@ ChipSwitch::~ChipSwitch() {
   nodes_.clear();
 }
 
-void ChipSwitch::set_chip(System* dragonfly, int switch_id) {
-  Chip::set_chip(dragonfly, switch_id);
+void ChipSwitch::set_group(System* dragonfly, int switch_id) {
+  Group::set_group(dragonfly, switch_id);
   group_id_ = switch_id / static_cast<DragonflySW*>(dragonfly)->sw_per_group_;
   Node* sw = get_node(number_cores_);
   NodeID sw_id = NodeID(number_cores_, switch_id);
@@ -33,7 +33,7 @@ void ChipSwitch::set_chip(System* dragonfly, int switch_id) {
   }
 }
 
-DragonflySW::DragonflySW() : num_switch_(num_chips_), switches_(chips_) {
+DragonflySW::DragonflySW() : num_switch_(num_groups_), switches_(groups_) {
   read_config();
   cores_per_sw_ = sw_radix_ / 4;
   l_ports_per_sw_ = sw_radix_ / 2 - 1;
@@ -55,7 +55,7 @@ DragonflySW::DragonflySW() : num_switch_(num_chips_), switches_(chips_) {
   for (int sw_id = 0; sw_id < num_switch_; sw_id++) {
     switches_.push_back(new ChipSwitch(sw_radix_, cores_per_sw_, param->vc_number,
                                        param->buffer_size, physical_channel_));
-    switches_[sw_id]->set_chip(this, sw_id);
+    switches_[sw_id]->set_group(this, sw_id);
   }
   connect_local();
   connect_global();
@@ -185,7 +185,7 @@ void DragonflySW::MIN_routing(Packet& s) const {
       VCInfo vc(global_port.link_buffer, 1);
       s.candidate_channels_.push_back(vc);
     } else { // the global link is at another switch of the group
-      ChipSwitch* global_sw = static_cast<ChipSwitch*>(get_chip(global_port.node_id.chip_id));
+      ChipSwitch* global_sw = static_cast<ChipSwitch*>(get_group(global_port.node_id.group_id));
       int current_sw_id_in_group = current_sw->chip_id_ % sw_per_group_;
       int global_sw_id_in_group = global_sw->chip_id_ % sw_per_group_;
       int port_id =

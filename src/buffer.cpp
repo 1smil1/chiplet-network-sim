@@ -35,7 +35,6 @@ Buffer::Buffer(Node* node, int vc_num, int buffer_size, Channel channel) {
   vc_queue_ = new std::queue<Packet*>[vc_num_];
   vc_head_packet = new std::atomic<Packet*>[vc_num_];
   for (int i = 0; i < vc_num_; ++i) {
-    // vc_buffer_.push_back(buffer_size);
     vc_buffer_[i].store(buffer_size);
     vc_queue_[i] = std::queue<Packet*>();
     vc_head_packet[i].store(nullptr);
@@ -45,6 +44,7 @@ Buffer::Buffer(Node* node, int vc_num, int buffer_size, Channel channel) {
 Buffer::~Buffer() {
   delete[] vc_buffer_;
   delete[] vc_queue_;
+  delete[] vc_head_packet;
 }
 
 bool Buffer::allocate_buffer(int vcb, int n) {
@@ -54,7 +54,8 @@ bool Buffer::allocate_buffer(int vcb, int n) {
       return false;
     else if (vc_buffer_[vcb].compare_exchange_weak(buffer, buffer - n))
       return true;
-    // buffer is allocate by other threads (packets), try again
+    else // buffer is modified by other threads (packets), try again
+      ;  
   }
 }
 
@@ -95,10 +96,9 @@ bool Buffer::allocate_sw_link() {
   bool link_used_state = sw_link_used_.load();
   if (link_used_state)
 	return false;
-  else if (sw_link_used_.compare_exchange_strong(link_used_state, true)) {
-	// link is allocated by this thread (packet)
-	return true;
-  } else  // allocation failed, link is allocated by other threads(packets)
+  else if (sw_link_used_.compare_exchange_strong(link_used_state, true)) 
+	return true; // link is allocated by this thread (packet)
+  else  // allocation failed, link is allocated by other threads(packets)
 	return false;
 }
 

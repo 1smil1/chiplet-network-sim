@@ -10,6 +10,7 @@ extern "C" {
 #include "boost/random.hpp"
 extern boost::mt19937 gen;
 
+// TrafficManager class is responsible for generating packets and statistics.
 class TrafficManager {
  public:
   TrafficManager();
@@ -49,14 +50,15 @@ class TrafficManager {
 
   std::unordered_map<Buffer*, std::atomic_uint64_t> traffic_map_;
   double pkt_for_injection_;
-  // atomic statistics, modified by all threds
   std::chrono::system_clock::time_point time_;
+  // atomic statistics, modified by all threds
   std::atomic_uint64_t all_message_num_;
   std::atomic_uint64_t message_arrived_;
   std::atomic_uint64_t message_timeout_;
   std::atomic_uint64_t total_cycles_;
+  std::atomic_uint64_t total_hops_;
   std::atomic_uint64_t total_internal_hops_;
-  std::atomic_uint64_t total_parallel_hops_;
-  std::atomic_uint64_t total_serial_hops_;
+  std::atomic_uint64_t total_external_hops_;
+  std::atomic_uint64_t total_specific_hops_;
   std::atomic_uint64_t total_other_hops_;
 };

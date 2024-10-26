@@ -1,13 +1,16 @@
 #pragma once
 #include "node.h"
 
-
-class Chip {
+// Group class is an intermediate class between System and Node
+// A group is a sub-network of the system network.
+// In a multi-chiplet System, a Group is typically a network-on-chiplet.
+// In a scale-out System, a Group is typically a package, and a Node is a chip.
+class Group {
  public:
-  Chip();
-  ~Chip();
+  Group();
+  ~Group();
 
-  virtual void set_chip(System* system, int chip_id_);
+  virtual void set_group(System* system, int group_id_);
   void reset();
 
   virtual inline Node* get_node(int node_id) const { return nodes_[node_id]; }
@@ -16,7 +19,7 @@ class Chip {
   System* system_;  // Point to the upper level group
 
   int chip_id_;
-  std::vector<int> chip_coordinate_;
+  std::vector<int> group_coordinate_;
   int number_nodes_;
   int number_cores_;
 

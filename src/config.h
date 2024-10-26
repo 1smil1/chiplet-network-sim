@@ -1,5 +1,4 @@
 #pragma once
-// #include <boost/optional.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <cassert>
@@ -19,6 +18,7 @@ const std::vector<std::string> traffic_patterns = {
     "test",       "uniform",     "hotspot",  "bitcomplement", "bittranspose", "bitreverse",
     "bitshuffle", "adversarial", "sd_trace", "netrace", "ring_all_reduce", "ring_all_reduce_bi"};
 
+// physical link between two nodes, including width (bandwidth) and latency
 struct Channel {
   Channel(int link_width = 0, int link_latency = 0) : width(link_width), latency(link_latency) {}
   int width;  // Link (bandwidth) can allocated at flit (1 flit/cycle) granularity.
@@ -31,10 +31,8 @@ struct Channel {
   }
 };
 
-const Channel on_chip_channel(1, 1);
-const Channel off_chip_parallel_channel(1, 2);
-const Channel off_chip_serial_channel(2, 4);
-const Channel long_distance_channel(1, 10);
+const Channel internal_channel(4, 1);
+const Channel specific_channel(1, 1);
 
 struct Parameters {
  public:

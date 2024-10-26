@@ -29,13 +29,14 @@ TrafficManager::TrafficManager() {
   message_arrived_.store(0);
   message_timeout_.store(0);
   total_cycles_.store(0);
+  total_hops_.store(0);
   total_internal_hops_.store(0);
-  total_parallel_hops_.store(0);
-  total_serial_hops_.store(0);
+  total_external_hops_.store(0);
+  total_specific_hops_.store(0);
   total_other_hops_.store(0);
 #ifdef DEBUG
-  for (auto& chip : network->chips_) {
-    for (auto& node : chip->nodes_) {
+  for (auto& group : network->groups_) {
+    for (auto& node : group->nodes_) {
       for (auto& buf : node->in_buffers_) {
         traffic_map_[buf].store(0);
       }
@@ -61,28 +62,30 @@ void TrafficManager::reset() {
   message_arrived_.store(0);
   message_timeout_.store(0);
   total_cycles_.store(0);
+  total_hops_.store(0);
   total_internal_hops_.store(0);
-  total_parallel_hops_.store(0);
-  total_serial_hops_.store(0);
+  total_external_hops_.store(0);
+  total_specific_hops_.store(0);
   total_other_hops_.store(0);
 }
 
 void TrafficManager::print_statistics() {
   std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - time_;
+  double average_total_hops = ((double)TM->total_hops_ / TM->message_arrived_);
   double average_internal_hops = ((double)TM->total_internal_hops_ / TM->message_arrived_);
-  double average_parallel_hops = ((double)TM->total_parallel_hops_ / TM->message_arrived_);
-  double average_serial_hops = ((double)TM->total_serial_hops_ / TM->message_arrived_);
+  double average_external_hops = ((double)TM->total_external_hops_ / TM->message_arrived_);
+  double average_specific_hops = ((double)TM->total_specific_hops_ / TM->message_arrived_);
   double average_other_hops = ((double)TM->total_other_hops_ / TM->message_arrived_);
   std::cout << std::endl
             << "Time elapsed: " << elapsed_seconds.count() << "s" << std::endl
             << "Injection rate:" << injection_rate_ << " flits/(node*cycle)"
-            << "    Injected:" << all_message_num_ << "    Arrived:  " << message_arrived_
-            << "    Timeout:  " << message_timeout_ << std::endl
+            << "  Injected: " << all_message_num_ << "  Arrived: " << message_arrived_
+            << "  Timeout: " << message_timeout_ << std::endl
             << "Average latency: " << ((double)TM->total_cycles_ / TM->message_arrived_)
             << "  Average receiving rate: " << receiving_rate() << std::endl
-            << "Internal Hops: " << average_internal_hops
-            << "   Parallel Hops: " << average_parallel_hops
-            << "   Serial Hops: " << average_serial_hops << "   Other Hops: " << average_other_hops
+            << "Total Hops: " << average_total_hops
+            << "  Internal Hops: " << average_internal_hops << "  External Hops: " << average_external_hops
+            << "  Specific Hops: " << average_specific_hops << "  Other Hops: " << average_other_hops
             << std::endl;
   output_ << injection_rate_ << "," << ((double)total_cycles_ / message_arrived_) << ","
           << receiving_rate() << std::endl;
@@ -141,31 +144,26 @@ void TrafficManager::genMes(std::vector<Packet*>& packets, uint64_t cyc) {
 
 Packet* TrafficManager::uniform_mess() {
   int src, dest;
-  int core_per_chip = network->chips_[0]->number_cores_;
   while (true) {
     src = gen() % traffic_scale_;
     dest = gen() % traffic_scale_;
     if (dest != src) break;
   }
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
 Packet* TrafficManager::intra_group_uniform_mess() {
   int src, dest;
-  int core_per_chip = network->chips_[0]->number_cores_;
   while (true) {
     src = gen() % traffic_scale_;
     dest = gen() % traffic_scale_;
     if (dest != src) break;
   }
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
 Packet* TrafficManager::hotspot_mess() {
   int src, dest;
-  int core_per_chip = network->chips_[0]->number_cores_;
   int node_per_WG = traffic_scale_ / 4;
   int WG1, WG2;
   while (true) {
@@ -175,14 +173,12 @@ Packet* TrafficManager::hotspot_mess() {
     dest = (WG2 * node_per_WG + gen() % node_per_WG) % traffic_scale_;
     if (src != dest) break;
   }
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
 Packet* TrafficManager::bitcomplement_mess() {
   int src, dest;
   int bits = (int)floor(log2(traffic_scale_));
-  int core_per_chip = network->chips_[0]->number_cores_;
   while (true) {
     src = gen() % traffic_scale_;
     boost::dynamic_bitset<> src_binary(bits, src);
@@ -190,14 +186,12 @@ Packet* TrafficManager::bitcomplement_mess() {
     dest = dest_binary.to_ulong() % traffic_scale_;
     if (dest != src) break;
   }
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
 Packet* TrafficManager::bitreverse_mess() {
   int src, dest;
   int bits = (int)floor(log2(traffic_scale_));
-  int core_per_chip = network->chips_[0]->number_cores_;
   while (true) {
     src = gen() % traffic_scale_;
     boost::dynamic_bitset<> src_binary(bits, src);
@@ -208,14 +202,12 @@ Packet* TrafficManager::bitreverse_mess() {
     dest = dest_binary.to_ulong() % traffic_scale_;
     if (dest != src) break;
   }
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
 Packet* TrafficManager::bitshuffle_mess() {
   int src, dest;
   int bits = (int)floor(log2(traffic_scale_));
-  int core_per_chip = network->chips_[0]->number_cores_;
   while (true) {
     src = gen() % traffic_scale_;
     boost::dynamic_bitset<> src_binary(bits, src);
@@ -225,14 +217,12 @@ Packet* TrafficManager::bitshuffle_mess() {
     dest = dest_binary.to_ulong() % traffic_scale_;
     if (dest != src) break;
   }
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
 Packet* TrafficManager::bittranspose_mess() {
   int src, dest;
   int bits = (int)floor(log2(traffic_scale_));
-  int core_per_chip = network->chips_[0]->number_cores_;
   while (true) {
     src = gen() % traffic_scale_;
     boost::dynamic_bitset<> src_binary(bits, src);
@@ -243,27 +233,22 @@ Packet* TrafficManager::bittranspose_mess() {
     dest = dest_binary.to_ulong() % traffic_scale_;
     if (dest != src) break;
   }
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
+// special traffic pattern for Dragonfly
 Packet* TrafficManager::adversarial_mess() {
   int src, dest;
-  int core_per_chip = network->chips_[0]->number_cores_;
   int node_per_WG = traffic_scale_ / 41;
   src = gen() % traffic_scale_;
   int src_group = src / node_per_WG;
   dest = ((src_group + 1) * node_per_WG + gen() % node_per_WG) % traffic_scale_;
   assert(src != dest);
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
 Packet* TrafficManager::sd_trace_mess() {
   int src, dest;
-  int core_number = network->num_cores_;
-  // int core_per_chip = (KNode - 2) * (KNode - 2);
-  int core_per_chip = network->chips_[0]->number_cores_;
   while (true) {
     std::string word;
     std::getline(trace_, word, ',');
@@ -273,18 +258,16 @@ Packet* TrafficManager::sd_trace_mess() {
     dest = std::stoi(word) * 4 + gen() % 4;
     if (dest != src) break;
   }
-  // return new Message(NodeID(src, src / core_per_chip),
-  //                    NodeID(dest, dest / core_per_chip));
-  return new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                    NodeID(dest % core_per_chip, dest / core_per_chip), message_length_);
+  return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
+// special traffic pattern for Dragonfly
 void TrafficManager::ring_all_reduce_mess(std::vector<Packet*>& packets) {
-  int core_per_chip = network->chips_[0]->number_cores_;
+  int core_per_chip = network->groups_[0]->number_cores_;
+  int dest1;
   for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ > traffic_scale_;
        pkt_for_injection_ -= traffic_scale_) {
     for (int src = 0; src < traffic_scale_; src++) {
-      int dest1;
       if (param->topology == "DragonflyChiplet") {
         if (src % 16 == 0 || src % 16 == 1 || src % 16 == 4 || src % 16 == 5)
           dest1 = (src + 2) % traffic_scale_;
@@ -295,23 +278,23 @@ void TrafficManager::ring_all_reduce_mess(std::vector<Packet*>& packets) {
         else if (src % 16 == 10 || src % 16 == 11 || src % 16 == 14 || src % 16 == 15)
           dest1 = (src - 2) % traffic_scale_;
       }
-      else if (param->topology == "DragonflySW") {
+      else // param->topology == "DragonflySW"
 		dest1 = (src + 1) % traffic_scale_;
-	  }
-      Packet* mess = new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                                NodeID(dest1 % core_per_chip, dest1 / core_per_chip), message_length_);
+      Packet* mess =
+          new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest1), message_length_);
       packets.push_back(mess);
       all_message_num_ += 1;
     }
   }
 }
 
+// special traffic pattern for Dragonfly
 void TrafficManager::ring_all_reduce_bi_mess(std::vector<Packet*>& packets) {
-  int core_per_chip = network->chips_[0]->number_cores_;
+  int core_per_chip = network->groups_[0]->number_cores_;
+  int dest1, dest2;
   for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ > traffic_scale_ * 2;
        pkt_for_injection_ -= traffic_scale_ * 2) {
     for (int src = 0; src < traffic_scale_; src++) {
-      int dest1, dest2;
       if (param->topology == "DragonflyChiplet") {
         if (src % 16 == 0 || src % 16 == 1 || src % 16 == 4 || src % 16 == 5) {
           dest1 = (src + 2) % traffic_scale_;
@@ -326,24 +309,24 @@ void TrafficManager::ring_all_reduce_bi_mess(std::vector<Packet*>& packets) {
           dest1 = (src - 2) % traffic_scale_;
 		  dest2 = (src - 8) % traffic_scale_;
         }
-      } else if (param->topology == "DragonflySW") {
+      } else { // param->topology == "DragonflySW"
         dest1 = (src + 1) % traffic_scale_;
         dest2  = (src - 1) % traffic_scale_;
       }
-      Packet* mess = new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                                NodeID(dest1 % core_per_chip, dest1 / core_per_chip), message_length_);
+      Packet* mess =
+          new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest1), message_length_);
       packets.push_back(mess);
-      mess = new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-                        NodeID(dest2 % core_per_chip, dest2 / core_per_chip), message_length_);
+      mess = new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest2), message_length_);
       packets.push_back(mess);
       all_message_num_ += 2;
     }
   }
 }
 
+// special traffic pattern generated by netrace
 void TrafficManager::netrace(std::vector<Packet*>& vecmess, uint64_t cyc) {
   int src, dest;
-  static int core_per_chip = network->chips_[0]->number_cores_;
+  static int core_per_chip = network->groups_[0]->number_cores_;
   static nt_packet_t* trace_packet = nullptr;
   if (cyc > CTX->input_trheader->num_cycles)
     return;
@@ -363,10 +346,7 @@ void TrafficManager::netrace(std::vector<Packet*>& vecmess, uint64_t cyc) {
     dest = trace_packet->dst;
     if (src != dest) {
       int packet_length = ceil((double)nt_get_packet_size(trace_packet) / 16);  // 16B Bus width
-      // Packet* packet =
-      //     new Packet(NodeID(src % core_per_chip, src / core_per_chip),
-      //                NodeID(dest % core_per_chip, dest / core_per_chip), packet_length);
-      Packet* packet = new Packet(network->id2nodeid(src), network->id2nodeid(dest), packet_length);
+      Packet* packet = new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), packet_length);
       vecmess.push_back(packet);
       all_message_num_++;
     }

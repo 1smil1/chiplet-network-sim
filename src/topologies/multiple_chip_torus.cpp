@@ -1,21 +1,24 @@
 #include "multiple_chip_torus.h"
 
-MultiChipTorus::MultiChipTorus() {
+const Channel off_chip_parallel_channel(1, 2);
+const Channel off_chip_serial_channel(2, 4);
+
+MultiChipTorus::MultiChipTorus() : chips_(groups_) {
   read_config();
-  num_chips_ = k_chip_ * k_chip_;
-  num_nodes_ = k_node_ * k_node_ * num_chips_;
+  num_groups_ = k_chip_ * k_chip_;
+  num_nodes_ = k_node_ * k_node_ * num_groups_;
   num_cores_ = num_nodes_;
-  for (int chip_id = 0; chip_id < num_chips_; chip_id++) {
+  for (int chip_id = 0; chip_id < num_groups_; chip_id++) {
     chips_.push_back(new ChipMesh(k_node_, param->vc_number, param->buffer_size));
-    chips_[chip_id]->set_chip(this, chip_id);
+    chips_[chip_id]->set_group(this, chip_id);
     get_chip(chip_id)->chip_coordinate_[0] = chip_id % k_chip_;
     get_chip(chip_id)->chip_coordinate_[1] = chip_id / k_chip_;
   }
-  connect_chiplets();
+  connect_chips();
 }
 
 MultiChipTorus::~MultiChipTorus() {
-  for (auto chiplet : chips_) delete chiplet;
+  for (auto chip : chips_) delete chip;
   chips_.clear();
 }
 
@@ -25,8 +28,8 @@ void MultiChipTorus::read_config() {
   algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "CLUE");
 }
 
-void MultiChipTorus::connect_chiplets() {
-  for (int chip_id = 0; chip_id < num_chips_; ++chip_id) {
+void MultiChipTorus::connect_chips() {
+  for (int chip_id = 0; chip_id < num_groups_; ++chip_id) {
     ChipMesh* chip = get_chip(chip_id);
     int chip_x = chip->chip_coordinate_[0];
     int chip_y = chip->chip_coordinate_[1];

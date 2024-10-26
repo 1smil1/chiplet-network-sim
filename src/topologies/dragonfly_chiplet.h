@@ -8,8 +8,8 @@ class NodeInCG : public Node {
  public:
   NodeInCG(int k_chiplet, int vc_num, int buffer_size, Channel internal_channel,
            Channel external_channel);
-  void set_node(Chip* cgroup, NodeID id) override;
-  CGroup* cgroup_;
+  void set_node(Group* cgroup, NodeID id) override;
+  Group* &cgroup_;
   int& node_id_in_cg_;
   int x_, y_;      // coodinate with the chip
   int k_chiplet_;  // 2D-mesh of k_chiplet_ * k_chiplet_
@@ -33,17 +33,17 @@ class NodeInCG : public Node {
   Buffer*& ypos_link_buffer_;
 };
 
-class CGroup : public Chip {
+class CGroup : public Group {
  public:
   CGroup(int k_chiplet, int cgroup_radix, int vc_num, int buffer_size, Channel internal_channel,
          Channel external_channel);
   ~CGroup();
 
-  void set_chip(System* dragonfly, int Cgroup_id) override;
+  void set_group(System* dragonfly, int Cgroup_id) override;
   inline NodeInCG* get_node(int chiplet_id) const {
-    return static_cast<NodeInCG*>(Chip::get_node(NodeID(chiplet_id)));
+    return static_cast<NodeInCG*>(Group::get_node(NodeID(chiplet_id)));
   }
-  inline NodeInCG* get_node(NodeID id) const { return static_cast<NodeInCG*>(Chip::get_node(id)); }
+  inline NodeInCG* get_node(NodeID id) const { return static_cast<NodeInCG*>(Group::get_node(id)); }
 
   DragonflyChiplet* dragonfly_;
   int& num_chiplets_;
@@ -57,7 +57,6 @@ class DragonflyChiplet : public System {
  public:
   // port_id in C-Group
   struct PortID {
-    PortID() {}
     PortID(int port_id_, int chiplet_id_) {
       port_id = port_id_;
       chiplet_id = chiplet_id_;
@@ -81,7 +80,7 @@ class DragonflyChiplet : public System {
   inline NodeInCG* get_node(NodeID id) const {
     return static_cast<NodeInCG*>(System::get_node(id));
   }
-  inline CGroup* get_cgroup(NodeID id) const { return static_cast<CGroup*>(get_chip(id.chip_id)); }
+  inline CGroup* get_cgroup(NodeID id) const { return static_cast<CGroup*>(get_group(id.group_id)); }
   inline Port get_port(int cgroup_id, int node_id) const {
     Node* chiplet = get_node(NodeID(node_id, cgroup_id));
     return chiplet->ports_[4];
@@ -121,5 +120,5 @@ class DragonflyChiplet : public System {
   // <src_group_id, dest_group_id> -> port
   std::map<std::pair<int, int>, Port> global_link_map_;
 
-  std::vector<Chip*>& cgroups_;
+  std::vector<Group*>& cgroups_;
 };

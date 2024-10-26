@@ -17,9 +17,10 @@ Packet::Packet(NodeID source, NodeID destination, int length) {
     switch_allocated_ = false;
     trans_timer_ = 0;
     wait_timer_ = 0;
+    hops_ = 0;
     internal_hops_ = 0;
-    parallel_hops_ = 0;
-    serial_hops_ = 0;
+    external_hops_ = 0;
+    specific_hops_ = 0;
     other_hops_ = 0;
     finished_ = false;
     releaselink_ = false;

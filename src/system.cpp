@@ -8,7 +8,7 @@
 #include "traffic_manager.h"
 
 System::System() {
-  num_chips_ = 0;
+  num_groups_ = 0;
   num_nodes_ = 0;
   num_cores_ = 0;
 
@@ -39,7 +39,7 @@ System* System::New(const std::string& topology) {
 }
 
 void System::reset() {
-  for (auto chip : chips_) {
+  for (auto chip : groups_) {
     chip->reset();
   }
 }
@@ -157,12 +157,13 @@ void System::update(Packet& p) {
 #ifdef DEBUG
     TM->traffic_map_[temp1.buffer]++;
 #endif  // DEBUG
-    if (temp1.buffer->channel_ == on_chip_channel)
+    p.hops_++;
+    if (temp1.buffer->channel_.latency == 1)
       p.internal_hops_++;
-    else if (temp1.buffer->channel_ == off_chip_parallel_channel)
-      p.parallel_hops_++;
-    else if (temp1.buffer->channel_ == off_chip_serial_channel)
-      p.serial_hops_++;
+    else // channel_.latency > 1
+      p.external_hops_++;
+    if (temp1.buffer->channel_ == specific_channel)
+      p.specific_hops_++;
     else
       p.other_hops_++;
     p.candidate_channels_.clear();
@@ -214,8 +215,9 @@ void System::update(Packet& p) {
     p.finished_ = true;
     TM->message_arrived_++;
     TM->total_cycles_ += p.trans_timer_;
-    TM->total_parallel_hops_ += p.parallel_hops_;
-    TM->total_serial_hops_ += p.serial_hops_;
+    TM->total_hops_ += p.hops_;
+    TM->total_external_hops_ += p.external_hops_;
+    TM->total_specific_hops_ += p.specific_hops_;
     TM->total_internal_hops_ += p.internal_hops_;
     TM->total_other_hops_ += p.other_hops_;
     return;

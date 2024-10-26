@@ -111,7 +111,6 @@ int main(int argc, char* argv[]) {
   TM = new TrafficManager();
   gen.seed(1);
 
-  uint64_t timeout_limit = param->timeout_limit;
   double maximum_receiving_rate = 0;
   std::vector<Packet*> all_packets;
 
@@ -153,7 +152,8 @@ int main(int argc, char* argv[]) {
         run_one_cycle(all_packets, network);
       }
       TM->reset();
-      for (uint64_t i = 0; i < param->simulation_time && TM->message_timeout_ < timeout_limit;
+      for (uint64_t i = 0;
+           i < param->simulation_time && TM->message_timeout_ < param->timeout_limit;
            i++) {
         TM->genMes(all_packets);
         run_one_cycle(all_packets, network);

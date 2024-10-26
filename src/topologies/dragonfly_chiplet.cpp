@@ -3,6 +3,7 @@
 NodeInCG::NodeInCG(int k_chiplet, int vc_num, int buffer_size, Channel internal_channel,
                    Channel external_channel)
     : Node(5, vc_num, buffer_size),
+      cgroup_(group_),
       node_id_in_cg_(id_.node_id),
       xneg_in_buffer_(in_buffers_[0]),
       xpos_in_buffer_(in_buffers_[1]),
@@ -26,10 +27,10 @@ NodeInCG::NodeInCG(int k_chiplet, int vc_num, int buffer_size, Channel internal_
   in_buffers_[4]->channel_ = external_channel;
 }
 
-void NodeInCG::set_node(Chip* cgroup, NodeID id) {
+void NodeInCG::set_node(Group* cgroup, NodeID id) {
   assert(cgroup != nullptr);
   Node::set_node(cgroup, id);
-  cgroup_ = dynamic_cast<CGroup*>(chip_);
+  cgroup_ = dynamic_cast<CGroup*>(group_);
   x_ = id.node_id % k_chiplet_;
   y_ = id.node_id / k_chiplet_;
 }
@@ -55,8 +56,8 @@ CGroup::~CGroup() {
   nodes_.clear();
 }
 
-void CGroup::set_chip(System* dragonfly, int cgroup_id) {
-  Chip::set_chip(dragonfly, cgroup_id);
+void CGroup::set_group(System* dragonfly, int cgroup_id) {
+  Group::set_group(dragonfly, cgroup_id);
   dragonfly_ = dynamic_cast<DragonflyChiplet*>(system_);
   wgroup_id_ = cgroup_id / dragonfly_->cgroup_per_wgroup_;
   // 2D-mesh
@@ -81,7 +82,7 @@ void CGroup::set_chip(System* dragonfly, int cgroup_id) {
   }
 }
 
-DragonflyChiplet::DragonflyChiplet() : num_cgroup_(num_chips_), cgroups_(chips_) {
+DragonflyChiplet::DragonflyChiplet() : num_cgroup_(num_groups_), cgroups_(groups_) {
   read_config();
   num_nodes_per_cg_ = k_node_in_CG_ * k_node_in_CG_;
   // cgroup_radix_ = 3 * chiplets_per_cg_;
@@ -102,7 +103,7 @@ DragonflyChiplet::DragonflyChiplet() : num_cgroup_(num_chips_), cgroups_(chips_)
   for (int cgroup_id = 0; cgroup_id < num_cgroup_; cgroup_id++) {
     cgroups_.push_back(new CGroup(k_node_in_CG_, cgroup_radix_, param->vc_number,
                                   param->buffer_size, internal_channel_, external_channel_));
-    cgroups_[cgroup_id]->set_chip(this, cgroup_id);
+    cgroups_[cgroup_id]->set_group(this, cgroup_id);
   }
   // build the map form ext_port_id to node_id
   int port_id = 0;
@@ -210,8 +211,8 @@ void DragonflyChiplet::MIN_routing(Packet& s) const {
   NodeInCG* current = get_node(s.head_trace().id);
   NodeInCG* destination = get_node(s.destination_);
 
-  CGroup* current_cgroup = current->cgroup_;
-  CGroup* dest_cgroup = destination->cgroup_;
+  CGroup* current_cgroup = get_cgroup(s.head_trace().id);
+  CGroup* dest_cgroup = get_cgroup(s.destination_);
 
   int current_cg_id_in_wg = current_cgroup->cgroup_id_ % cgroup_per_wgroup_;
   int dest_cg_id_in_wg = dest_cgroup->cgroup_id_ % cgroup_per_wgroup_;
@@ -232,7 +233,7 @@ void DragonflyChiplet::MIN_routing(Packet& s) const {
     int dest_wg_id = dest_cgroup->wgroup_id_;
     // mis-routing
     if (mis_routing) {
-      CGroup* source_cg = get_node(s.source_)->cgroup_;
+      CGroup* source_cg = get_cgroup(s.source_);
       int source_wg_id = source_cg->wgroup_id_;
       int src_cg_id_in_wgroup = source_cg->cgroup_id_ % cgroup_per_wgroup_;
       // port id for the lowest global port of the C-group: cg_id_in_wgroup

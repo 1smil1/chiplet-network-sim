@@ -26,9 +26,10 @@ class Packet {
   int link_timer_;     // time cost on the link
   int wait_timer_;     // waiting time in one buffer
   int trans_timer_;    // the total time a message consumed
+  int hops_;
   int internal_hops_;
-  int parallel_hops_;
-  int serial_hops_;
+  int external_hops_;
+  int specific_hops_;
   int other_hops_;
   bool finished_;      // check message whether arrived
   bool releaselink_;   // if the tail of a message shifts , the physical link

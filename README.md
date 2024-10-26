@@ -7,7 +7,7 @@ If you use CNSim in your research, we would appreciate the following citation in
 Yinxiao Feng, Yuchen Wei, Dong Xiang and Kaisheng Ma. Evaluating Chiplet-based Large-Scale Interconnection Networks via Cycle-Accurate Packet-Parallel Simulation. In 2024 USENIX Annual Technical Conference (ATC), 2024.
 
 ### Features
-- Hyper-threading
+- Multi-threading
 - Cycle-accurate
 - Highly configurable and customizable in terms of topology, routing algorithms, and microarchitecture.
 
@@ -36,5 +36,4 @@ cmake --build .
 
 ### Acknowledgement
  - Yuchen Wei, Tsinghua University
- - Dong Xiang and Kaisheng Ma, Tsinghua University
  - BookSim and Netrace (https://github.com/booksim)

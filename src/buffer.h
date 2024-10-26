@@ -7,6 +7,10 @@
 class Packet;
 class Buffer;
 
+// VCInfo class is used to:
+// 1. identify the VC channel that is allocated to a packet in p.next_vc_
+// 2. identify a routing choice for a packet in p.candidate_channels_
+// 3. identify the position (trace) of each flit in a packet p.flit_trace_
 struct VCInfo {
   VCInfo(Buffer* buffer_ = nullptr, int vcb_ = 0, NodeID id_ = NodeID());
   NodeID id;
@@ -17,17 +21,18 @@ struct VCInfo {
   Packet* head_packet() const;
 };
 
+// Buffer class is used as an input port of a router.
 class Buffer {
  public:
   Buffer();
   Buffer(Node* node, int vc_num, int buffer_size, Channel channel);
   ~Buffer();
 
-  bool allocate_buffer(int vcb, int n);  // Return true if there is enough free buffer.
+  bool allocate_buffer(int vcb, int n);  
   void release_buffer(int vcb, int n);
-  bool allocate_in_link(Packet&);
+  bool allocate_in_link(Packet&);        
   void release_in_link(Packet&);
-  bool allocate_sw_link();
+  bool allocate_sw_link();  
   void release_sw_link();
   inline Packet* head_packet(int vcb) { return vc_head_packet[vcb].load(); }
   inline bool is_empty(int vcb) { return vc_head_packet[vcb].load() == nullptr; }

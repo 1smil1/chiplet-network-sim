@@ -1,14 +1,14 @@
-#include "chip.h"
+#include "group.h"
 #include "system.h"
 
-Chip::Chip() {
+Group::Group() {
 	system_ = nullptr;
 	chip_id_ = 0;
-	//port_number_ = 0;
 	number_nodes_ = 0;
+    number_cores_ = 0;
 }
 
-Chip::~Chip()
+Group::~Group()
 {
 	for (auto node : nodes_) {
 		delete node;
@@ -16,7 +16,7 @@ Chip::~Chip()
 	nodes_.clear();
 }
 
-void Chip::set_chip(System* system, int chip_id)
+void Group::set_group(System* system, int chip_id)
 {
 	system_ = system;
 	chip_id_ = chip_id;
@@ -26,13 +26,8 @@ void Chip::set_chip(System* system, int chip_id)
 	}
 }
 
-void Chip::reset() {
+void Group::reset() {
 	for (auto node : nodes_) {
 		node->reset();
 	}
 }
-
-//Port Chip::get_port(int port_id)
-//{
-//	return ports_[port_id];
-//}

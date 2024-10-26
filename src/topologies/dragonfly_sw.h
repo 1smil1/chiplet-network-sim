@@ -6,12 +6,12 @@
 //  int port_id;
 //};
 
-class ChipSwitch : public Chip {
+class ChipSwitch : public Group {
  public:
   ChipSwitch(int sw_radix, int num_core, int vc_num, int buffer_size, Channel);
   ~ChipSwitch();
 
-  void set_chip(System* dragonfly, int switch_id) override;
+  void set_group(System* dragonfly, int switch_id) override;
 
   int switch_radix_;
   //int num_cores_;
@@ -35,7 +35,7 @@ class DragonflySW : public System {
   void MIN_routing(Packet& s) const;
 
   inline ChipSwitch* get_switch(NodeID id) const {
-    return static_cast<ChipSwitch*>(get_chip(id.chip_id));
+    return static_cast<ChipSwitch*>(get_group(id.group_id));
   }
   inline Port get_port(int switch_id, int port_id) const {
     Node* sw = get_node(NodeID(cores_per_sw_, switch_id));
@@ -65,5 +65,5 @@ class DragonflySW : public System {
   // <src_group_id, dest_group_id> -> port
   std::map<std::pair<int, int>, Port> global_link_map_;
 
-  std::vector<Chip*>& switches_;
+  std::vector<Group*>& switches_;
 };

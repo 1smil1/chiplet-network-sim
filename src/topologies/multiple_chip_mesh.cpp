@@ -1,22 +1,25 @@
 #include "multiple_chip_mesh.h"
 
-MultiChipMesh::MultiChipMesh() {
+const Channel off_chip_parallel_channel(1, 2);
+const Channel off_chip_serial_channel(2, 4);
+
+MultiChipMesh::MultiChipMesh() :chips_(groups_) {
   // topology parameters
   read_config();
-  num_chips_ = k_chip_ * k_chip_;
-  num_nodes_ = k_node_ * k_node_ * num_chips_;
+  num_groups_ = k_chip_ * k_chip_;
+  num_nodes_ = k_node_ * k_node_ * num_groups_;
   num_cores_ = num_nodes_;
-  for (int chip_id = 0; chip_id < num_chips_; chip_id++) {
+  for (int chip_id = 0; chip_id < num_groups_; chip_id++) {
     chips_.push_back(new ChipMesh(k_node_, param->vc_number, param->buffer_size));
-    get_chip(chip_id)->set_chip(this, chip_id);
-    get_chip(chip_id)->chip_coordinate_[0] = chip_id % k_chip_;
-    get_chip(chip_id)->chip_coordinate_[1] = chip_id / k_chip_;
+    get_group(chip_id)->set_group(this, chip_id);
+    get_group(chip_id)->chip_coordinate_[0] = chip_id % k_chip_;
+    get_group(chip_id)->chip_coordinate_[1] = chip_id / k_chip_;
   }
-  connect_chiplets();
+  connect_chips();
 }
 
 MultiChipMesh::~MultiChipMesh() {
-  for (auto chiplet : chips_) delete chiplet;
+  for (auto chip : chips_) delete chip;
   chips_.clear();
 }
 
@@ -30,9 +33,9 @@ void MultiChipMesh::read_config() {
          k_node_, k_node_);
 }
 
-void MultiChipMesh::connect_chiplets() {
-  for (int chip_id = 0; chip_id < num_chips_; ++chip_id) {
-    ChipMesh* chip = get_chip(chip_id);
+void MultiChipMesh::connect_chips() {
+  for (int chip_id = 0; chip_id < num_groups_; ++chip_id) {
+    ChipMesh* chip = get_group(chip_id);
     int chip_x = chip->chip_coordinate_[0];
     int chip_y = chip->chip_coordinate_[1];
     if (chip_x != 0) {
@@ -102,8 +105,8 @@ void MultiChipMesh::routing_algorithm(Packet& s) const {
 }
 
 void MultiChipMesh::XY_routing(Packet& s) const {
-  ChipMesh* current_chip = get_chip(s.head_trace().id);
-  ChipMesh* destination_chip = get_chip(s.destination_);
+  ChipMesh* current_chip = get_group(s.head_trace().id);
+  ChipMesh* destination_chip = get_group(s.destination_);
   NodeMesh* current_node = get_node(s.head_trace().id);
   NodeMesh* destination_node = get_node(s.destination_);
 
@@ -131,8 +134,8 @@ void MultiChipMesh::XY_routing(Packet& s) const {
 }
 
 void MultiChipMesh::NFR_routing(Packet& s) const {
-  ChipMesh* current_chip = get_chip(s.head_trace().id);
-  ChipMesh* destination_chip = get_chip(s.destination_);
+  ChipMesh* current_chip = get_group(s.head_trace().id);
+  ChipMesh* destination_chip = get_group(s.destination_);
   NodeMesh* current_node = get_node(s.head_trace().id);
   NodeMesh* destination_node = get_node(s.destination_);
 
@@ -162,8 +165,8 @@ void MultiChipMesh::NFR_routing(Packet& s) const {
 }
 
 void MultiChipMesh::NFR_adaptive_routing(Packet& s) const {
-  ChipMesh* current_chip = get_chip(s.head_trace().id);
-  ChipMesh* destination_chip = get_chip(s.destination_);
+  ChipMesh* current_chip = get_group(s.head_trace().id);
+  ChipMesh* destination_chip = get_group(s.destination_);
   NodeMesh* current_node = get_node(s.head_trace().id);
   NodeMesh* destination_node = get_node(s.destination_);
 
