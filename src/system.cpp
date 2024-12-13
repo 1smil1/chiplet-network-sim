@@ -5,6 +5,7 @@
 #include "multiple_chip_mesh.h"
 #include "multiple_chip_torus.h"
 #include "single_chip_mesh.h"
+#include "railx_2d_hyperx.h"
 #include "traffic_manager.h"
 
 System::System() {
@@ -31,6 +32,8 @@ System* System::New(const std::string& topology) {
     sys_ptr = new DragonflySW;
   else if (topology == "DragonflyChiplet")
     sys_ptr = new DragonflyChiplet;
+  else if (topology == "RailX")
+    sys_ptr = new RailX;
   else {
     std::cerr << "No such a topology!" << std::endl;
     return nullptr;

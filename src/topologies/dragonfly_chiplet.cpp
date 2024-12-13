@@ -37,11 +37,11 @@ void NodeInCG::set_node(Group* cgroup, NodeID id) {
 
 CGroup::CGroup(int k_chiplet, int cgroup_radix, int vc_num, int buffer_size,
                Channel internal_channel, Channel external_channel)
-    : num_chiplets_(number_nodes_), cgroup_id_(chip_id_) {
+    : num_chiplets_(num_nodes_), cgroup_id_(group_id_) {
   k_node_ = k_chiplet;
   cgroup_radix_ = cgroup_radix;
   num_chiplets_ = k_chiplet * k_chiplet;
-  number_cores_ = num_chiplets_;
+  num_cores_ = num_chiplets_;
   wgroup_id_ = 0;
   dragonfly_ = nullptr;
   nodes_.reserve(num_chiplets_);
@@ -61,7 +61,7 @@ void CGroup::set_group(System* dragonfly, int cgroup_id) {
   dragonfly_ = dynamic_cast<DragonflyChiplet*>(system_);
   wgroup_id_ = cgroup_id / dragonfly_->cgroup_per_wgroup_;
   // 2D-mesh
-  for (int node_id = 0; node_id < number_nodes_; node_id++) {
+  for (int node_id = 0; node_id < num_nodes_; node_id++) {
     NodeInCG* node = get_node(node_id);
     if (node->x_ != 0) {
       node->xneg_link_node_ = NodeID(node_id - 1, cgroup_id);
@@ -147,9 +147,9 @@ void DragonflyChiplet::connect_local() {
     for (int i = 0; i < (cgroup_per_wgroup_ - 1); i++) {
       int node_id_1 = port_node_map_.at(cgroup_radix_ - 1);
       int node_id_2 = port_node_map_.at(0);
-      Port port1 = get_port(wgroup_id * cgroup_per_wgroup_ + i, node_id_1);
-      Port port2 = get_port(wgroup_id * cgroup_per_wgroup_ + i + 1, node_id_2);
-      Port::connect(port1, port2);
+      Port* port1 = get_port(wgroup_id * cgroup_per_wgroup_ + i, node_id_1);
+      Port* port2 = get_port(wgroup_id * cgroup_per_wgroup_ + i + 1, node_id_2);
+      Port::connect_port(port1, port2);
       if (wgroup_id == 0) {
         local_link_map_.insert({{i, i + 1}, node_id_1});
         local_link_map_.insert({{i + 1, i}, node_id_2});
@@ -159,9 +159,9 @@ void DragonflyChiplet::connect_local() {
       for (int j = i + 2; j < cgroup_per_wgroup_; j++) {
         int node_id_1 = port_node_map_.at(cgroup_radix_ - (j - i));
         int node_id_2 = port_node_map_.at(i + 1);
-        Port port1 = get_port(wgroup_id * cgroup_per_wgroup_ + i, node_id_1);
-        Port port2 = get_port(wgroup_id * cgroup_per_wgroup_ + j, node_id_2);
-        Port::connect(port1, port2);
+        Port* port1 = get_port(wgroup_id * cgroup_per_wgroup_ + i, node_id_1);
+        Port* port2 = get_port(wgroup_id * cgroup_per_wgroup_ + j, node_id_2);
+        Port::connect_port(port1, port2);
         if (wgroup_id == 0) {
           local_link_map_.insert({{i, j}, node_id_1});
           local_link_map_.insert({{j, i}, node_id_2});
@@ -178,9 +178,9 @@ void DragonflyChiplet::connect_global() {
     int node_id_1, node_id_2;
     std::tie(cg_id_in_wg_1, node_id_1) = global_port_id_to_port_id(g_ports_per_wg_ - 1);
     std::tie(cg_id_in_wg_2, node_id_2) = global_port_id_to_port_id(0);
-    Port port1 = get_port(i * cgroup_per_wgroup_ + cg_id_in_wg_1, node_id_1);
-    Port port2 = get_port((i + 1) * cgroup_per_wgroup_ + cg_id_in_wg_2, node_id_2);
-    Port::connect(port1, port2);
+    Port* port1 = get_port(i * cgroup_per_wgroup_ + cg_id_in_wg_1, node_id_1);
+    Port* port2 = get_port((i + 1) * cgroup_per_wgroup_ + cg_id_in_wg_2, node_id_2);
+    Port::connect_port(port1, port2);
     global_link_map_.insert({{i, i + 1}, port1});
     global_link_map_.insert({{i + 1, i}, port2});
   }
@@ -191,9 +191,9 @@ void DragonflyChiplet::connect_global() {
       int node_id_1, node_id_2;
       std::tie(cg_id_in_wg_1, node_id_1) = global_port_id_to_port_id(g_ports_per_wg_ - (j - i));
       std::tie(cg_id_in_wg_2, node_id_2) = global_port_id_to_port_id(i + 1);
-      Port port1 = get_port(i * cgroup_per_wgroup_ + cg_id_in_wg_1, node_id_1);
-      Port port2 = get_port(j * cgroup_per_wgroup_ + cg_id_in_wg_2, node_id_2);
-      Port::connect(port1, port2);
+      Port* port1 = get_port(i * cgroup_per_wgroup_ + cg_id_in_wg_1, node_id_1);
+      Port* port2 = get_port(j * cgroup_per_wgroup_ + cg_id_in_wg_2, node_id_2);
+      Port::connect_port(port1, port2);
       global_link_map_.insert({{i, j}, port1});
       global_link_map_.insert({{j, i}, port2});
     }
@@ -221,12 +221,12 @@ void DragonflyChiplet::MIN_routing(Packet& s) const {
     XY_routing(s, destination->id_, 2);
   } else if (current_cgroup->wgroup_id_ == dest_cgroup->wgroup_id_) {  // within the W-Group
     int node_id = local_link_map_.at({current_cg_id_in_wg, dest_cg_id_in_wg});
-    Port local_port = get_port(current_cgroup->cgroup_id_, node_id);
+    Port* local_port = get_port(current_cgroup->cgroup_id_, node_id);
     if (node_id == current->node_id_in_cg_) {  // ext_port is at current chiplet
-      VCInfo vc(local_port.link_buffer, 2);
+      VCInfo vc(local_port->link_buffer, 2);
       s.candidate_channels_.push_back(vc);
     } else {  // ext_port is at an other chiplet
-      XY_routing(s, local_port.node_id, 2);
+      XY_routing(s, local_port->node_id, 2);
     }
   } else {  // the destination switch is in another group (global)
     int current_wg_id = current_cgroup->wgroup_id_;
@@ -240,12 +240,12 @@ void DragonflyChiplet::MIN_routing(Packet& s) const {
       if (current_wg_id == source_wg_id) {
         int leave_node_id =
             port_node_map_.at(src_cg_id_in_wgroup + s.source_.node_id % g_ports_per_cg_);
-        Port misrouting_global_port = get_port(current_cgroup->cgroup_id_, leave_node_id);
+        Port* misrouting_global_port = get_port(current_cgroup->cgroup_id_, leave_node_id);
         if (current->node_id_in_cg_ == leave_node_id) {
-          VCInfo vc(misrouting_global_port.link_buffer, 0);
+          VCInfo vc(misrouting_global_port->link_buffer, 0);
           s.candidate_channels_.push_back(vc);
         } else {
-          XY_routing(s, NodeID(misrouting_global_port.node_id), 0);
+          XY_routing(s, NodeID(misrouting_global_port->node_id), 0);
           return;
         }
         // if (current_wg_id == source_wg_id) {
@@ -256,26 +256,26 @@ void DragonflyChiplet::MIN_routing(Packet& s) const {
         // }
       }
     }
-    Port global_port = global_link_map_.at({current_wg_id, dest_wg_id});
-    if (global_port.node_id.node_id == current->node_id_in_cg_) {
-      VCInfo vc(global_port.link_buffer, 1);
+    Port* global_port = global_link_map_.at({current_wg_id, dest_wg_id});
+    if (global_port->node_id.node_id == current->node_id_in_cg_) {
+      VCInfo vc(global_port->link_buffer, 1);
       s.candidate_channels_.push_back(vc);
     } else {  // the global_port is at an other chiplet
-      CGroup* global_cgroup = get_cgroup(global_port.node_id);
+      CGroup* global_cgroup = get_cgroup(global_port->node_id);
       // the global_port is at current C-Group
       if (current_cgroup->cgroup_id_ == global_cgroup->cgroup_id_) {
-        XY_routing(s, global_port.node_id, 1);
+        XY_routing(s, global_port->node_id, 1);
       } else {  // the global_port is at an other C-Group, go a local link first
         // the cgroup_id_in_wgroup of the global_port
         int g_port_cg_id_in_wg = global_cgroup->cgroup_id_ % cgroup_per_wgroup_;
         int node_id = local_link_map_.at({current_cg_id_in_wg, g_port_cg_id_in_wg});
-        Port local_port = get_port(current_cgroup->cgroup_id_, node_id);
+        Port* local_port = get_port(current_cgroup->cgroup_id_, node_id);
         // local_port is at current chiplet
         if (node_id == current->node_id_in_cg_) {
-          VCInfo vc(local_port.link_buffer, 1);
+          VCInfo vc(local_port->link_buffer, 1);
           s.candidate_channels_.push_back(vc);
         } else {  // local_port is at an other chiplet
-          XY_routing(s, local_port.node_id, 1);
+          XY_routing(s, local_port->node_id, 1);
         }
       }
     }

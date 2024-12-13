@@ -4,7 +4,7 @@
 // Group class is an intermediate class between System and Node
 // A group is a sub-network of the system network.
 // In a multi-chiplet System, a Group is typically a network-on-chiplet.
-// In a scale-out System, a Group is typically a package, and a Node is a chip.
+// In a scale-out System, a Group is typically a package or a scale-up domain, and a Node is a chip.
 class Group {
  public:
   Group();
@@ -18,10 +18,10 @@ class Group {
 
   System* system_;  // Point to the upper level group
 
-  int chip_id_;
+  int group_id_;
   std::vector<int> group_coordinate_;
-  int number_nodes_;
-  int number_cores_;
+  int num_nodes_;
+  int num_cores_;
 
   friend TrafficManager;
  protected:

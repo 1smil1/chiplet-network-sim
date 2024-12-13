@@ -37,7 +37,7 @@ class DragonflySW : public System {
   inline ChipSwitch* get_switch(NodeID id) const {
     return static_cast<ChipSwitch*>(get_group(id.group_id));
   }
-  inline Port get_port(int switch_id, int port_id) const {
+  inline Port* get_port(int switch_id, int port_id) const {
     Node* sw = get_node(NodeID(cores_per_sw_, switch_id));
     return sw->ports_[port_id];
   }
@@ -63,7 +63,7 @@ class DragonflySW : public System {
   // <src_sw_id_in_group, dest_sw_id_in_group> -> port_id
   std::map<std::pair<int, int>, int> local_link_map_;
   // <src_group_id, dest_group_id> -> port
-  std::map<std::pair<int, int>, Port> global_link_map_;
+  std::map<std::pair<int, int>, Port*> global_link_map_;
 
   std::vector<Group*>& switches_;
 };

@@ -28,12 +28,14 @@ struct Port {
   Buffer*& in_buffer;
   NodeID& link_node;
   Buffer*& link_buffer;
+  Port(NodeID& nid, Buffer*& ib, NodeID& ln, Buffer*& lb)
+      : node_id(nid), in_buffer(ib), link_node(ln), link_buffer(lb) {}
   // Connecting two ports
-  static void connect(Port& p1, Port& p2) {
-    p1.link_node = p2.node_id;
-    p1.link_buffer = p2.in_buffer;
-    p2.link_node = p1.node_id;
-    p2.link_buffer = p1.in_buffer;
+  static void connect_port(Port*& p1, Port*& p2) {
+    p1->link_node = p2->node_id;
+    p1->link_buffer = p2->in_buffer;
+    p2->link_node = p1->node_id;
+    p2->link_buffer = p1->in_buffer;
   }
 };
 
@@ -61,5 +63,6 @@ class Node {
   // Point to input buffer connected to the output port.
   std::vector<Buffer*> link_buffers_;
 
-  std::vector<Port> ports_;
+  // A collection of { node_id, in_buffer, link_node, link_buffer }
+  std::vector<Port*> ports_;
 };

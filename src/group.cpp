@@ -3,9 +3,9 @@
 
 Group::Group() {
 	system_ = nullptr;
-	chip_id_ = 0;
-	number_nodes_ = 0;
-    number_cores_ = 0;
+	group_id_ = 0;
+	num_nodes_ = 0;
+    num_cores_ = 0;
 }
 
 Group::~Group()
@@ -19,9 +19,9 @@ Group::~Group()
 void Group::set_group(System* system, int chip_id)
 {
 	system_ = system;
-	chip_id_ = chip_id;
-	for (int node_id = 0; node_id < number_nodes_; node_id++) {
-		NodeID id(node_id, chip_id_);
+	group_id_ = chip_id;
+	for (int node_id = 0; node_id < num_nodes_; node_id++) {
+		NodeID id(node_id, group_id_);
 		nodes_[node_id]->set_node(this, id);
 	}
 }

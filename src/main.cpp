@@ -105,7 +105,13 @@ static void run_one_cycle(std::vector<Packet*>& vec_pkts, System* system) {
 
 int main(int argc, char* argv[]) {
   std::string config_file;
-  if (argc > 1) config_file = argv[1];
+  if (argc > 1) {
+    config_file = argv[1];
+    std::cout << "Using configuration file: " << config_file << std::endl;
+  } else {
+    std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+    return 1;
+  }
   param = new Parameters(config_file);
   network = System::New(param->topology);
   TM = new TrafficManager();

@@ -2,11 +2,11 @@
 
 ChipSwitch::ChipSwitch(int sw_radix, int num_core, int vc_num, int buffer_size, Channel ch) {
   switch_radix_ = sw_radix;
-  number_cores_ = num_core;
-  number_nodes_ = number_cores_ + 1;
+  num_cores_ = num_core;
+  num_nodes_ = num_cores_ + 1;
   group_id_ = 0;
-  nodes_.reserve(number_nodes_);
-  for (int i = 0; i < number_cores_; i++) {
+  nodes_.reserve(num_nodes_);
+  for (int i = 0; i < num_cores_; i++) {
     nodes_.push_back(new Node(1, vc_num, buffer_size, ch));
   }
   nodes_.push_back(new Node(switch_radix_, vc_num, buffer_size, ch));
@@ -20,10 +20,10 @@ ChipSwitch::~ChipSwitch() {
 void ChipSwitch::set_group(System* dragonfly, int switch_id) {
   Group::set_group(dragonfly, switch_id);
   group_id_ = switch_id / static_cast<DragonflySW*>(dragonfly)->sw_per_group_;
-  Node* sw = get_node(number_cores_);
-  NodeID sw_id = NodeID(number_cores_, switch_id);
+  Node* sw = get_node(num_cores_);
+  NodeID sw_id = NodeID(num_cores_, switch_id);
   // connect cores to switch
-  for (int i = 0; i < number_cores_; i++) {
+  for (int i = 0; i < num_cores_; i++) {
     Node* core = get_node(i);
     NodeID core_id = NodeID(i, switch_id);
     core->link_nodes_[0] = sw_id;
@@ -70,7 +70,7 @@ void DragonflySW::read_config() {
   sw_radix_ = param->params_ptree.get<int>("Network.sw_radix", 16);
   algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "MIN");
   fully_use_ports_ = param->params_ptree.get<bool>("Network.fully_use_ports", false);
-  int latency = param->params_ptree.get<int>("Network.channel_latency", 4);
+  int latency = param->params_ptree.get<int>("Network.channel_latency", 2);
   physical_channel_ = Channel(1, latency);
   mis_routing = param->params_ptree.get<bool>("Network.mis_routing", false);
 }
@@ -79,9 +79,9 @@ void DragonflySW::connect_local() {
   for (int group_id = 0; group_id < num_group_; group_id++) {  // For each group
     // step 1:
     for (int i = 0; i < (sw_per_group_ - 1); i++) {
-      Port port1 = get_port(group_id * sw_per_group_ + i, sw_radix_ - 1);
-      Port port2 = get_port(group_id * sw_per_group_ + i + 1, cores_per_sw_);
-      Port::connect(port1, port2);
+      Port* port1 = get_port(group_id * sw_per_group_ + i, sw_radix_ - 1);
+      Port* port2 = get_port(group_id * sw_per_group_ + i + 1, cores_per_sw_);
+      Port::connect_port(port1, port2);
       if (group_id == 0) {
         local_link_map_.insert({{i, i + 1}, sw_radix_ - 1});
         local_link_map_.insert({{i + 1, i}, cores_per_sw_});
@@ -92,9 +92,9 @@ void DragonflySW::connect_local() {
       for (int j = i + 2; j < sw_per_group_; j++) {
         // int highest_port = sw_radix_ - (j - i);
         // int lowest_port = cores_per_sw_ + (i + 1);
-        Port port1 = get_port(group_id * sw_per_group_ + i, sw_radix_ - (j - i));
-        Port port2 = get_port(group_id * sw_per_group_ + j, cores_per_sw_ + (i + 1));
-        Port::connect(port1, port2);
+        Port* port1 = get_port(group_id * sw_per_group_ + i, sw_radix_ - (j - i));
+        Port* port2 = get_port(group_id * sw_per_group_ + j, cores_per_sw_ + (i + 1));
+        Port::connect_port(port1, port2);
         if (group_id == 0) {
           local_link_map_.insert({{i, j}, sw_radix_ - (j - i)});
           local_link_map_.insert({{j, i}, cores_per_sw_ + (i + 1)});
@@ -111,9 +111,9 @@ void DragonflySW::connect_global() {
     int port_id_1, port_id_2;
     std::tie(sw_id_in_group_1, port_id_1) = global_port_id_to_port_id(g_ports_per_group_ - 1);
     std::tie(sw_id_in_group_2, port_id_2) = global_port_id_to_port_id(0);
-    Port port1 = get_port(i * sw_per_group_ + sw_id_in_group_1, port_id_1);
-    Port port2 = get_port((i + 1) * sw_per_group_ + sw_id_in_group_2, port_id_2);
-    Port::connect(port1, port2);
+    Port* port1 = get_port(i * sw_per_group_ + sw_id_in_group_1, port_id_1);
+    Port* port2 = get_port((i + 1) * sw_per_group_ + sw_id_in_group_2, port_id_2);
+    Port::connect_port(port1, port2);
     global_link_map_.insert({std::make_pair(i, i + 1), port1});
     global_link_map_.insert({std::make_pair(i + 1, i), port2});
   }
@@ -125,9 +125,9 @@ void DragonflySW::connect_global() {
       std::tie(sw_id_in_group_1, port_id_1) =
           global_port_id_to_port_id(g_ports_per_group_ - (j - i));
       std::tie(sw_id_in_group_2, port_id_2) = global_port_id_to_port_id(i + 1);
-      Port port1 = get_port(i * sw_per_group_ + sw_id_in_group_1, port_id_1);
-      Port port2 = get_port(j * sw_per_group_ + sw_id_in_group_2, port_id_2);
-      Port::connect(port1, port2);
+      Port* port1 = get_port(i * sw_per_group_ + sw_id_in_group_1, port_id_1);
+      Port* port2 = get_port(j * sw_per_group_ + sw_id_in_group_2, port_id_2);
+      Port::connect_port(port1, port2);
       global_link_map_.insert({std::make_pair(i, j), port1});
       global_link_map_.insert({std::make_pair(j, i), port2});
     }
@@ -155,14 +155,14 @@ void DragonflySW::MIN_routing(Packet& s) const {
     }
   }
   // current node is switch
-  else if (current_sw->chip_id_ == dest_sw->chip_id_) {  // within the switch
+  else if (current_sw->group_id_ == dest_sw->group_id_) {  // within the switch
     Buffer* next_buffer = current->link_buffers_[destination->id_.node_id];
     for (int i = 0; i < param->vc_number; i++) {
       s.candidate_channels_.push_back(VCInfo(next_buffer, i));
     }
   } else if (current_sw->group_id_ == dest_sw->group_id_) {  // within the group
-    int current_sw_id_in_group = current_sw->chip_id_ % sw_per_group_;
-    int dest_sw_id_in_group = dest_sw->chip_id_ % sw_per_group_;
+    int current_sw_id_in_group = current_sw->group_id_ % sw_per_group_;
+    int dest_sw_id_in_group = dest_sw->group_id_ % sw_per_group_;
     int port_id = local_link_map_.at(std::make_pair(current_sw_id_in_group, dest_sw_id_in_group));
     VCInfo vc(current->link_buffers_[port_id], 2);
     s.candidate_channels_.push_back(vc);
@@ -173,21 +173,21 @@ void DragonflySW::MIN_routing(Packet& s) const {
     if (mis_routing) {
       int source_group_id = get_switch(s.source_)->group_id_;
       if (current_group_id == source_group_id) {
-        int sw_id_in_group = current_sw->chip_id_ % sw_per_group_;
+        int sw_id_in_group = current_sw->group_id_ % sw_per_group_;
         int lowest_global_port_id = cores_per_sw_ + sw_id_in_group;
         VCInfo vc(current->link_buffers_[lowest_global_port_id + s.source_.node_id], 0);
         s.candidate_channels_.push_back(vc);
         return;
       }
     }
-    Port global_port = global_link_map_.at(std::make_pair(current_group_id, dest_group_id));
-    if (current->id_ == global_port.node_id) {  // the global link is at current switch
-      VCInfo vc(global_port.link_buffer, 1);
+    Port* global_port = global_link_map_.at(std::make_pair(current_group_id, dest_group_id));
+    if (current->id_ == global_port->node_id) {  // the global link is at current switch
+      VCInfo vc(global_port->link_buffer, 1);
       s.candidate_channels_.push_back(vc);
     } else { // the global link is at another switch of the group
-      ChipSwitch* global_sw = static_cast<ChipSwitch*>(get_group(global_port.node_id.group_id));
-      int current_sw_id_in_group = current_sw->chip_id_ % sw_per_group_;
-      int global_sw_id_in_group = global_sw->chip_id_ % sw_per_group_;
+      ChipSwitch* global_sw = static_cast<ChipSwitch*>(get_group(global_port->node_id.group_id));
+      int current_sw_id_in_group = current_sw->group_id_ % sw_per_group_;
+      int global_sw_id_in_group = global_sw->group_id_ % sw_per_group_;
       int port_id =
           local_link_map_.at(std::make_pair(current_sw_id_in_group, global_sw_id_in_group));
       VCInfo vc(current->link_buffers_[port_id], 1);

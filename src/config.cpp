@@ -7,19 +7,19 @@ Parameters::Parameters(const std::string &config_file) {
 
   topology = params_ptree.get<std::string>("Network.topology", "SingleChipMesh");
   buffer_size = params_ptree.get<int>("Network.buffer_size", 16);
-  vc_number = params_ptree.get<int>("Network.vc_number", 1);
-  router_stages = params_ptree.get<std::string>("Network.router_stages", "ThreeStage");
+  vc_number = params_ptree.get<int>("Network.vc_number", 3);
+  router_stages = params_ptree.get<std::string>("Network.router_stages", "OneStage");
   processing_time = params_ptree.get<int>("Network.processing_time", 2);
 
   traffic = params_ptree.get<std::string>("Workload.traffic", "uniform");
   traffic_scale = params_ptree.get<int>("Workload.traffic_scale", 0);
-  packet_length = params_ptree.get<int>("Workload.packet_length", 16);
+  packet_length = params_ptree.get<int>("Workload.packet_length", 4);
 
-  injection_increment = params_ptree.get<double>("Simulation.injection_increment", 0.02);
+  injection_increment = params_ptree.get<double>("Simulation.injection_increment", 0.00001);
   simulation_time = params_ptree.get<uint64_t>("Simulation.simulation_time", 10000);
   timeout_threshold = params_ptree.get<int>("Simulation.timeout_threshold", 500);
   timeout_limit = params_ptree.get<int>("Simulation.timeout_limit", 1);
-  threads = params_ptree.get<int>("Simulation.threads", 2);
+  threads = params_ptree.get<int>("Simulation.threads", 1);
   if (threads >= 2)
     issue_width = params_ptree.get<int>("Simulation.issue_width", 10);
   else

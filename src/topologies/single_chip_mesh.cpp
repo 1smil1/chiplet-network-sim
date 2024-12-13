@@ -29,10 +29,10 @@ void NodeMesh::set_node(Group *chip, NodeID id) {
 
 ChipMesh::ChipMesh(int k_node, int vc_num, int buffer_size) : chip_coordinate_(group_coordinate_) {
   k_node_ = k_node;
-  number_nodes_ = k_node_ * k_node_;
-  number_cores_ = number_nodes_;
-  nodes_.reserve(number_nodes_);
-  for (int node_id = 0; node_id < number_nodes_; node_id++) {
+  num_nodes_ = k_node_ * k_node_;
+  num_cores_ = num_nodes_;
+  nodes_.reserve(num_nodes_);
+  for (int node_id = 0; node_id < num_nodes_; node_id++) {
     nodes_.push_back(new NodeMesh(k_node_, vc_num, buffer_size));
   }
 }
@@ -46,7 +46,7 @@ ChipMesh::~ChipMesh() {
 
 void ChipMesh::set_group(System *system, int chip_id) {
   Group::set_group(system, chip_id);
-  for (int node_id = 0; node_id < number_nodes_; node_id++) {
+  for (int node_id = 0; node_id < num_nodes_; node_id++) {
     NodeMesh *node = get_node(node_id);
     if (node->x_ != 0) {
       node->xneg_link_node_ = NodeID(node_id - 1, chip_id);

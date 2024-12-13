@@ -26,7 +26,7 @@ class NodeInCG : public Node {
   NodeID& yneg_link_node_;
   NodeID& ypos_link_node_;
 
-  // Point to input buffer connected to the output port.
+  // Point to input buffer to which the output port goes.
   Buffer*& xneg_link_buffer_;
   Buffer*& xpos_link_buffer_;
   Buffer*& yneg_link_buffer_;
@@ -41,7 +41,7 @@ class CGroup : public Group {
 
   void set_group(System* dragonfly, int Cgroup_id) override;
   inline NodeInCG* get_node(int chiplet_id) const {
-    return static_cast<NodeInCG*>(Group::get_node(NodeID(chiplet_id)));
+    return static_cast<NodeInCG*>(Group::get_node(chiplet_id));
   }
   inline NodeInCG* get_node(NodeID id) const { return static_cast<NodeInCG*>(Group::get_node(id)); }
 
@@ -81,7 +81,7 @@ class DragonflyChiplet : public System {
     return static_cast<NodeInCG*>(System::get_node(id));
   }
   inline CGroup* get_cgroup(NodeID id) const { return static_cast<CGroup*>(get_group(id.group_id)); }
-  inline Port get_port(int cgroup_id, int node_id) const {
+  inline Port* get_port(int cgroup_id, int node_id) const {
     Node* chiplet = get_node(NodeID(node_id, cgroup_id));
     return chiplet->ports_[4];
   }
@@ -113,12 +113,12 @@ class DragonflyChiplet : public System {
   int& num_cgroup_;
   bool mis_routing;
 
-  // <port_id, node_id>
+  // <port_id, node_id> record each port is at witch node
   std::map<int, int> port_node_map_;
   // <src_cgroup_id_in_wgroup, dest_cgroup_id_in_wgroup> -> node_id
   std::map<std::pair<int, int>, int> local_link_map_;
   // <src_group_id, dest_group_id> -> port
-  std::map<std::pair<int, int>, Port> global_link_map_;
+  std::map<std::pair<int, int>, Port*> global_link_map_;
 
   std::vector<Group*>& cgroups_;
 };

@@ -22,8 +22,8 @@ class System {
   virtual void routing_algorithm(Packet& s) const = 0;
   // Used in Traffic Generator, convert core_id (int) to NodeID
   virtual NodeID int_to_nodeid(int id) const {
-    int node_id = id % groups_[0]->number_cores_;
-    int group_id = id / groups_[0]->number_cores_;
+    int node_id = id % groups_[0]->num_cores_;
+    int group_id = id / groups_[0]->num_cores_;
     return NodeID(node_id, group_id);
   }
   virtual inline Group* get_group(int group_id) const { return groups_[group_id]; }
@@ -33,10 +33,10 @@ class System {
   }
 
   int num_groups_;
-  int num_nodes_;  // some nodes are only used for routing, no packets injected
+  int num_nodes_;  // some nodes are only used for routing (e.g., switches), no packets injected
   int num_cores_;
 
-  // router parameters
+  // router parameterss
   std::string router_stages_;
 
   // simulation parameters
