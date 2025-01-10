@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
       }
       TM->reset();
       for (uint64_t i = 0;
-           i < param->simulation_time && TM->message_timeout_ < param->timeout_limit;
+           i < param->simulation_time && TM->message_timeout_ <= param->timeout_limit;
            i++) {
         TM->genMes(all_packets);
         run_one_cycle(all_packets, network);

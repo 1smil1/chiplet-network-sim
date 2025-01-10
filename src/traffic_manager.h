@@ -29,8 +29,9 @@ class TrafficManager {
   void ring_all_reduce_mess(std::vector<Packet*>& packets);
   void ring_all_reduce_bi_mess(std::vector<Packet*>& packets);
   void netrace(std::vector<Packet*>& packets, uint64_t cyc);
+  inline double average_latency() const { return (double)total_cycles_ / message_arrived_; };
   inline double receiving_rate() const {
-    return injection_rate_ * ((double)TM->message_arrived_ / TM->all_message_num_);
+    return injection_rate_ * (double)message_arrived_ / TM->all_message_num_;
   };
 
   void print_statistics();

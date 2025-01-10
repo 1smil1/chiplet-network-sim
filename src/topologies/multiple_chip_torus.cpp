@@ -11,8 +11,7 @@ MultiChipTorus::MultiChipTorus() : chips_(groups_) {
   for (int chip_id = 0; chip_id < num_groups_; chip_id++) {
     chips_.push_back(new ChipMesh(k_node_, param->vc_number, param->buffer_size));
     chips_[chip_id]->set_group(this, chip_id);
-    get_chip(chip_id)->chip_coordinate_[0] = chip_id % k_chip_;
-    get_chip(chip_id)->chip_coordinate_[1] = chip_id / k_chip_;
+    get_chip(chip_id)->chip_coordinate_ = {chip_id % k_chip_, chip_id / k_chip_};
   }
   connect_chips();
 }
@@ -35,7 +34,7 @@ void MultiChipTorus::connect_chips() {
     int chip_y = chip->chip_coordinate_[1];
     NodeMesh* node;
     int link_node_id, link_chip_id;
-    for (int y = 0; y < k_node_; ++y) {
+    for (int y = 0; y < k_node_; ++y) { // x-neg
       node = chip->get_node(y * k_node_);
       link_node_id = y * k_node_ + k_node_ - 1;
       link_chip_id = chip_y * k_chip_ + (chip_id - 1 + k_chip_) % k_chip_;
@@ -46,7 +45,7 @@ void MultiChipTorus::connect_chips() {
       else
         node->xneg_in_buffer_->channel_ = off_chip_parallel_channel;
     }
-    for (int y = 0; y < k_node_; ++y) {
+    for (int y = 0; y < k_node_; ++y) { // x-pos
       node = chip->get_node(y * k_node_ + k_node_ - 1);
       link_node_id = y * k_node_;
       link_chip_id = chip_y * k_chip_ + (chip_id + 1) % k_chip_;
@@ -57,7 +56,7 @@ void MultiChipTorus::connect_chips() {
       else
         node->xpos_in_buffer_->channel_ = off_chip_parallel_channel;
     }
-    for (int x = 0; x < k_node_; ++x) {
+    for (int x = 0; x < k_node_; ++x) { // y-neg
       node = chip->get_node(x);
       link_node_id = x + (k_node_ - 1) * k_node_;
       link_chip_id = (chip_y - 1 + k_chip_) % k_chip_ * k_chip_ + chip_x;
@@ -68,7 +67,7 @@ void MultiChipTorus::connect_chips() {
       else
         node->yneg_in_buffer_->channel_ = off_chip_parallel_channel;
     }
-    for (int x = 0; x < k_node_; ++x) {
+    for (int x = 0; x < k_node_; ++x) { // y-pos
       node = chip->get_node(x + (k_node_ - 1) * k_node_);
       link_node_id = x;
       link_chip_id = (chip_y + 1) % k_chip_ * k_chip_ + chip_x;

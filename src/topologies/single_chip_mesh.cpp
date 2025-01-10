@@ -32,6 +32,7 @@ ChipMesh::ChipMesh(int k_node, int vc_num, int buffer_size) : chip_coordinate_(g
   num_nodes_ = k_node_ * k_node_;
   num_cores_ = num_nodes_;
   nodes_.reserve(num_nodes_);
+  chip_coordinate_.resize(2);
   for (int node_id = 0; node_id < num_nodes_; node_id++) {
     nodes_.push_back(new NodeMesh(k_node_, vc_num, buffer_size));
   }

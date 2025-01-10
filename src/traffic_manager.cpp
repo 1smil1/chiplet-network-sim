@@ -71,23 +71,23 @@ void TrafficManager::reset() {
 
 void TrafficManager::print_statistics() {
   std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - time_;
-  double average_total_hops = ((double)TM->total_hops_ / TM->message_arrived_);
-  double average_internal_hops = ((double)TM->total_internal_hops_ / TM->message_arrived_);
-  double average_external_hops = ((double)TM->total_external_hops_ / TM->message_arrived_);
-  double average_specific_hops = ((double)TM->total_specific_hops_ / TM->message_arrived_);
-  double average_other_hops = ((double)TM->total_other_hops_ / TM->message_arrived_);
+  double average_total_hops = (double)TM->total_hops_ / TM->message_arrived_;
+  double average_internal_hops = (double)TM->total_internal_hops_ / TM->message_arrived_;
+  double average_external_hops = (double)TM->total_external_hops_ / TM->message_arrived_;
+  double average_specific_hops = (double)TM->total_specific_hops_ / TM->message_arrived_;
+  double average_other_hops = (double)TM->total_other_hops_ / TM->message_arrived_;
   std::cout << std::endl
             << "Time elapsed: " << elapsed_seconds.count() << "s" << std::endl
             << "Injection rate:" << injection_rate_ << " flits/(node*cycle)"
             << "  Injected: " << all_message_num_ << "  Arrived: " << message_arrived_
             << "  Timeout: " << message_timeout_ << std::endl
-            << "Average latency: " << ((double)TM->total_cycles_ / TM->message_arrived_)
+            << "Average latency: " << average_latency()
             << "  Average receiving rate: " << receiving_rate() << std::endl
             << "Total Hops: " << average_total_hops
             << "  Internal Hops: " << average_internal_hops << "  External Hops: " << average_external_hops
             << "  Specific Hops: " << average_specific_hops << "  Other Hops: " << average_other_hops
             << std::endl;
-  output_ << injection_rate_ << "," << ((double)total_cycles_ / message_arrived_) << ","
+  output_ << injection_rate_ << "," << average_latency() << ","
           << receiving_rate() << std::endl;
 #ifdef DEBUG
   // int max = 0;
@@ -116,7 +116,7 @@ void TrafficManager::genMes(std::vector<Packet*>& packets, uint64_t cyc) {
   for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ >= 1; pkt_for_injection_--) {
     Packet* mess;
     if (traffic_ == "test")
-      mess = new Packet(NodeID(3, 0), NodeID(0, 2), message_length_);
+      mess = new Packet(NodeID(3, 0), NodeID(0, 0), message_length_);
     else if (traffic_ == "uniform")
       mess = uniform_mess();
     else if (traffic_ == "intra_group_uniform")
