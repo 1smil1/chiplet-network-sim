@@ -1,5 +1,5 @@
 #pragma once
-#include "System.h"
+#include "system.h"
 
 class HBMesh;
 class RailX2DHyperX;
