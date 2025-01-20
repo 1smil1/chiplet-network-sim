@@ -11,6 +11,11 @@ class System {
   virtual ~System() {}
   virtual void reset();
   virtual void read_config() = 0; // Each system (topology) inport its own parameters.
+  virtual void print_config() {
+    std::cout << "Number of cores: " << num_cores_ << std::endl;
+    std::cout << "Number of nodes: " << num_nodes_ << std::endl;
+    std::cout << "Number of groups: " << num_groups_ << std::endl;
+  }
   void update(Packet& s);
   void onestage(Packet& s);
   void twostage(Packet& s);

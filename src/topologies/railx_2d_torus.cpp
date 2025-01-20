@@ -2,7 +2,6 @@
 
 RailX2DTorus::RailX2DTorus() : num_mesh_(num_groups_), meshes_(groups_) {
   read_config();
-  num_rail_ = m_scale_ * n_port_;
   num_mesh_ = x_scale_ * y_scale_;
   num_nodes_ = num_mesh_ * (m_scale_ * m_scale_);
   num_cores_ = num_nodes_;

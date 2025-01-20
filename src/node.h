@@ -44,13 +44,15 @@ struct Port {
 // It contains several input ports with buffers.
 class Node {
  public:
-  Node(int radix, int vc_num, int buffer_size, Channel channel = internal_channel);
+  Node(int radix, int vc_num, int buffer_size, Channel channel = default_channel);
   ~Node();
 
   virtual void set_node(Group* group, NodeID id);
   void reset();
 
   NodeID id_;
+  int& node_id_ = id_.node_id;
+  int& group_id_ = id_.group_id;
   Group* group_;
   int radix_;
 

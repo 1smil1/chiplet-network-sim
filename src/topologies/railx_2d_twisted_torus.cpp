@@ -4,57 +4,45 @@
 /**
  * Constructor of RailX2DTwistedTorus
  */
-RailX2DTwistedTorus::RailX2DTwistedTorus() : num_mesh_(num_groups_), meshes_(groups_)
-{
-    read_config();
-    num_rail_ = m_scale_ * n_port_;
+RailX2DTwistedTorus::RailX2DTwistedTorus() : num_mesh_(num_groups_), meshes_(groups_) {
+  read_config();
+  num_mesh_ = x_scale_ * y_scale_;
+  num_nodes_ = num_mesh_ * (m_scale_ * m_scale_);
+  num_cores_ = num_nodes_;
+  meshes_.reserve(num_mesh_);
 
-    // Assert that x_scale and y_scale are both multiples of m_scale
-    assert(x_scale_ % m_scale_ == 0);
-    assert(y_scale_ % m_scale_ == 0);
-    // Assert that x_scale is twice of y_scale
-    assert(x_scale_ == y_scale * 2);
-
-    num_mesh_ = x_scale_ * y_scale_;
-    num_nodes_ = num_mesh_ * (m_scale_ * m_scale_);
-    num_cores_ = num_nodes_;
-    meshes_.reserve(num_mesh_);
-    
-    for (int mesh_id = 0; mesh_id < num_mesh_; mesh_id++)
-    {
-        meshes_.push_back(new HBMesh(m_scale_, n_port_, param->vc_number, param->buffer_size,
-                                     internal_HB_link, external_link));
-        meshes_[mesh_id]->set_group(this, mesh_id);
-        get_mesh(mesh_id)->coordinate_ = {mesh_id % x_scale_, mesh_id / x_scale_};
-    }
-    connect();
+  for (int mesh_id = 0; mesh_id < num_mesh_; mesh_id++) {
+    meshes_.push_back(new HBMesh(m_scale_, n_port_, param->vc_number, param->buffer_size,
+                                 internal_HB_link, external_link));
+    meshes_[mesh_id]->set_group(this, mesh_id);
+    get_mesh(mesh_id)->coordinate_ = {mesh_id % x_scale_, mesh_id / x_scale_};
+  }
+  connect();
 }
 
 /**
  * Destructor of RailX2DTwistedTorus
  */
-RailX2DTwistedTorus::~RailX2DTwistedTorus()
-{
-    for (auto mesh : meshes_)
-        delete mesh;
-    meshes_.clear();
+RailX2DTwistedTorus::~RailX2DTwistedTorus() {
+  for (auto mesh : meshes_) delete mesh;
+  meshes_.clear();
 }
 
 
 /**
  * Read the configuration of RailX2DTwistedTorus
  */
-void RailX2DTwistedTorus::read_config()
-{
-    m_scale_ = param->params_ptree.get<int>("Network.m_scale", 8);
-    n_port_ = param->params_ptree.get<int>("Network.n_port", 1);
-    x_scale_ = param->params_ptree.get<int>("Network.x_scale", 1);
-    y_scale_ = param->params_ptree.get<int>("Network.y_scale", 1);
-    algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "MIN");
-    int internal_bandiwdth = param->params_ptree.get<int>("Network.internal_bandwidth", 1);
-    int external_latency = param->params_ptree.get<int>("Network.external_latency", 1);
-    internal_HB_link = Channel(internal_bandiwdth, 1);
-    external_link = Channel(1, external_latency);
+void RailX2DTwistedTorus::read_config() {
+  m_scale_ = param->params_ptree.get<int>("Network.m_scale", 4);
+  n_port_ = param->params_ptree.get<int>("Network.n_port", 1);
+  x_scale_ = param->params_ptree.get<int>("Network.x_scale", 1);
+  y_scale_ = param->params_ptree.get<int>("Network.y_scale", 2);
+  assert(x_scale_ == y_scale_ * 2);
+  algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "MIN");
+  int internal_bandiwdth = param->params_ptree.get<int>("Network.internal_bandwidth", 1);
+  int external_latency = param->params_ptree.get<int>("Network.external_latency", 1);
+  internal_HB_link = Channel(internal_bandiwdth, 1);
+  external_link = Channel(1, external_latency);
 }
 
 
@@ -230,13 +218,13 @@ void RailX2DTwistedTorus::XY_routing(Packet& s) const
         return;
     }
     assert(x_scale_ / 2 == y_scale_);
-    unsigned int a = x_scale_ / 2;
+    unsigned int a = x_scale_ * m_scale_ / 2;
 
     // Computes all possible coordinate differences (dx, dy) that the
     // twisted torus wraparounds allow
     // In a 2a x a twisted torus, x can wrap by +/- a or +/- 2a, while
     // y can wrap by +/- a
-    int NUM_CANDIDATES = 7;
+    const int NUM_CANDIDATES = 7;
     // FIXME: Should probably not hardcode the order of the pairs
     int dx_candidates[NUM_CANDIDATES] = {
         dest_x - cur_x,
@@ -315,4 +303,6 @@ void RailX2DTwistedTorus::XY_routing(Packet& s) const
         for (int i = 0; i < n_port_; i++)
             s.candidate_channels_.push_back(VCInfo(current_chiplet->ypos_link_buffers_[i], vcb));
     }
+
+    assert(!s.candidate_channels_.empty());
 }

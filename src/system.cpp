@@ -7,6 +7,8 @@
 #include "single_chip_mesh.h"
 #include "railx_2d_hyperx.h"
 #include "railx_2d_torus.h"
+#include "railx_2d_twisted_torus.h"
+#include "fat_tree.h"
 #include "traffic_manager.h"
 
 System::System() {
@@ -37,6 +39,10 @@ System* System::New(const std::string& topology) {
     sys_ptr = new RailX2DHyperX;
   else if (topology == "RailX2DTorus")
     sys_ptr = new RailX2DTorus;
+  else if (topology == "RailX2DTwistedTorus")
+    sys_ptr = new RailX2DTwistedTorus;
+  else if (topology == "FatTree")
+    sys_ptr = new FatTree;
   else {
     std::cerr << "No such a topology!" << std::endl;
     return nullptr;

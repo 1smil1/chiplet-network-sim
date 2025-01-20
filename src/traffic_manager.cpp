@@ -116,7 +116,7 @@ void TrafficManager::genMes(std::vector<Packet*>& packets, uint64_t cyc) {
   for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ >= 1; pkt_for_injection_--) {
     Packet* mess;
     if (traffic_ == "test")
-      mess = new Packet(NodeID(3, 0), NodeID(0, 0), message_length_);
+      mess = new Packet(NodeID(5, 2), NodeID(3, 1), message_length_);
     else if (traffic_ == "uniform")
       mess = uniform_mess();
     else if (traffic_ == "intra_group_uniform")
