@@ -43,6 +43,7 @@ class System {
 
   // router parameterss
   std::string router_stages_;
+  std::string algorithm_;
 
   // simulation parameters
   int timeout_time_;

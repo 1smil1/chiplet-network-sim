@@ -22,9 +22,6 @@ class RailX2DTorus : public System {
   inline HBMesh* get_mesh(int mesh_id) const {
     return static_cast<HBMesh*>(System::get_group(mesh_id));
   }
-  inline HBMesh* get_mesh(std::vector<int>& hyperx_coordinate) const {
-    return get_mesh(hyperx_coordinate[0] + hyperx_coordinate[1] * m_scale_);
-  }
 
   std::string algorithm_;
 

@@ -39,10 +39,10 @@ class ChipletInMesh : public Node {
   std::vector<std::reference_wrapper<NodeID>> ypos_link_nodes_;
 
   // Point to input buffer to which the output port goes.
-  std::vector<Buffer*> xneg_link_buffers_;
-  std::vector<Buffer*> xpos_link_buffers_;
-  std::vector<Buffer*> yneg_link_buffers_;
-  std::vector<Buffer*> ypos_link_buffers_;
+  std::vector<std::reference_wrapper<Buffer*>> xneg_link_buffers_;
+  std::vector<std::reference_wrapper<Buffer*>> xpos_link_buffers_;
+  std::vector<std::reference_wrapper<Buffer*>> yneg_link_buffers_;
+  std::vector<std::reference_wrapper<Buffer*>> ypos_link_buffers_;
 
   std::vector<Port*> xneg_ports_;
   std::vector<Port*> xpos_ports_;

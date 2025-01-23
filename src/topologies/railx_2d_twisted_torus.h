@@ -31,7 +31,7 @@ class RailX2DTwistedTorus: public System
      std::string algorithm_;
      int m_scale_;
      int n_port_;
-     int num_rail_;
+     int num_rails_;
      int x_scale_;  // gloabal x scale of torus
      int y_scale_;  // gloabal y scale of torus
      Channel internal_HB_link;

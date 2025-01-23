@@ -21,9 +21,8 @@ class Spine : public Group {
   ~Spine();
   inline Node* get_spine_sw(int sw_id, int rail_id) { return nodes_[sw_id * num_rails_ + rail_id]; }
   int num_rails_;
-  int num_down_links_;
+  int switch_radix_;
   int& num_spine_sw_;
-  int& spine_id_;
 };
 
 class FatTree : public System {

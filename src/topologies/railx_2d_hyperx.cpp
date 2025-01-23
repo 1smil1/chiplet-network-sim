@@ -2,8 +2,8 @@
 
 RailX2DHyperX::RailX2DHyperX() : num_mesh_(num_groups_), meshes_(groups_) {
   read_config();
-  num_rail_ = m_scale_ * n_port_;
-  num_mesh_ = (num_rail_ + 1) * (num_rail_ + 1);
+  num_rails_ = m_scale_ * n_port_;
+  num_mesh_ = (num_rails_ + 1) * (num_rails_ + 1);
   num_nodes_ = num_mesh_ * (m_scale_ * m_scale_);
   num_cores_ = num_nodes_;
   meshes_.reserve(num_mesh_);
@@ -12,7 +12,7 @@ RailX2DHyperX::RailX2DHyperX() : num_mesh_(num_groups_), meshes_(groups_) {
                                  internal_HB_link, external_link));
     meshes_[mesh_id]->set_group(this, mesh_id);
   }
-  hamilton_decomp_ = gen_hamilton_decomp_odd(num_rail_ + 1);
+  hamilton_decomp_ = gen_hamilton_decomp_odd(num_rails_ + 1);
   for (auto& v : hamilton_decomp_) {
     for (auto& i : v) {
       std::cout << i << " ";
@@ -39,19 +39,19 @@ void RailX2DHyperX::read_config() {
 
 void RailX2DHyperX::connect() {
   // rail-ring-based all-to-all connection
-  for (int i = 0; i < num_rail_; i++) { // rail-i
-    for (int j = 0; j < num_rail_ + 1; j++) {    // rail-ring
-      for (int k = 0; k < num_rail_ + 1; k++) {  // for each row/column
+  for (int i = 0; i < num_rails_; i++) { // rail-i
+    for (int j = 0; j < num_rails_ + 1; j++) {    // rail-ring
+      for (int k = 0; k < num_rails_ + 1; k++) {  // for each row/column
         // X-rails
-        int mesh_id_1 = k * (num_rail_ + 1) + hamilton_decomp_[i][j];
-        int mesh_id_2 = k * (num_rail_ + 1) + hamilton_decomp_[i][(j + 1) % (num_rail_ + 1)];
+        int mesh_id_1 = k * (num_rails_ + 1) + hamilton_decomp_[i][j];
+        int mesh_id_2 = k * (num_rails_ + 1) + hamilton_decomp_[i][(j + 1) % (num_rails_ + 1)];
         //std::cout << "rail:" << i << " mesh_id_1:" << mesh_id_1 << " mesh_id_2:" << mesh_id_2 << std::endl;
         Port* port1 = get_mesh(mesh_id_1)->xpos_rail_ports_[i];
         Port* port2 = get_mesh(mesh_id_2)->xneg_rail_ports_[i];
         Port::connect_port(port1, port2);
         // Y-rails
-        mesh_id_1 = hamilton_decomp_[i][j] * (num_rail_ + 1) + k;
-        mesh_id_2 = hamilton_decomp_[i][(j + 1) % (num_rail_ + 1)] * (num_rail_ + 1) + k;
+        mesh_id_1 = hamilton_decomp_[i][j] * (num_rails_ + 1) + k;
+        mesh_id_2 = hamilton_decomp_[i][(j + 1) % (num_rails_ + 1)] * (num_rails_ + 1) + k;
         port1 = get_mesh(mesh_id_1)->ypos_rail_ports_[i];
         port2 = get_mesh(mesh_id_2)->yneg_rail_ports_[i];
         Port::connect_port(port1, port2);

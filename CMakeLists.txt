@@ -23,7 +23,7 @@ endif()
 aux_source_directory(src SRC_FILES)
 aux_source_directory(src/netrace NETRACE_FILES)
 aux_source_directory(src/topologies TOPOLOGY_FILES)
-add_executable (${PROJECT_NAME} ${SRC_FILES} ${NETRACE_FILES} ${TOPOLOGY_FILES})
+add_executable (${PROJECT_NAME} ${SRC_FILES} ${NETRACE_FILES} ${TOPOLOGY_FILES} "src/topologies/hammingmesh.cpp")
 target_include_directories(${PROJECT_NAME} PUBLIC src src/netrace src/topologies)
 
 if(MSVC)

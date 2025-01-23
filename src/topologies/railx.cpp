@@ -23,10 +23,10 @@ ChipletInMesh::ChipletInMesh(int m_scale, int n_port, int vc_num, int buffer_siz
     xpos_link_nodes_.push_back(std::ref(link_nodes_[n_port + j]));
     yneg_link_nodes_.push_back(std::ref(link_nodes_[2 * n_port + j]));
     ypos_link_nodes_.push_back(std::ref(link_nodes_[3 * n_port + j]));
-    xneg_link_buffers_.push_back(link_buffers_[j]);
-    xpos_link_buffers_.push_back(link_buffers_[n_port + j]);
-    yneg_link_buffers_.push_back(link_buffers_[2 * n_port + j]);
-    ypos_link_buffers_.push_back(link_buffers_[3 * n_port + j]);
+    xneg_link_buffers_.push_back(std::ref(link_buffers_[j]));
+    xpos_link_buffers_.push_back(std::ref(link_buffers_[n_port + j]));
+    yneg_link_buffers_.push_back(std::ref(link_buffers_[2 * n_port + j]));
+    ypos_link_buffers_.push_back(std::ref(link_buffers_[3 * n_port + j]));
     xneg_ports_.push_back(ports_[j]);
     xpos_ports_.push_back(ports_[n_port + j]);
     yneg_ports_.push_back(ports_[2 * n_port + j]);
@@ -76,7 +76,7 @@ void HBMesh::set_group(System* system, int mesh_id) {
     if (chiplet->x_ != 0) {
       for (int i = 0; i < n_port_; i++) {
         chiplet->xneg_link_nodes_[i].get() = NodeID(node_id - 1, mesh_id);
-        chiplet->xneg_link_buffers_[i] =
+        chiplet->xneg_link_buffers_[i].get() =
             get_chiplet(chiplet->xneg_link_nodes_[i])->xpos_in_buffers_[i];
       }
     } else {
@@ -88,7 +88,7 @@ void HBMesh::set_group(System* system, int mesh_id) {
     if (chiplet->x_ != m_scale_ - 1) {
       for (int i = 0; i < n_port_; i++) {
         chiplet->xpos_link_nodes_[i].get() = NodeID(node_id + 1, mesh_id);
-        chiplet->xpos_link_buffers_[i] =
+        chiplet->xpos_link_buffers_[i].get() =
             get_chiplet(chiplet->xpos_link_nodes_[i])->xneg_in_buffers_[i];
       }
     } else {
@@ -100,7 +100,7 @@ void HBMesh::set_group(System* system, int mesh_id) {
     if (chiplet->y_ != 0) {
       for (int i = 0; i < n_port_; i++) {
         chiplet->yneg_link_nodes_[i].get() = NodeID(node_id - m_scale_, mesh_id);
-        chiplet->yneg_link_buffers_[i] =
+        chiplet->yneg_link_buffers_[i].get() =
             get_chiplet(chiplet->yneg_link_nodes_[i])->ypos_in_buffers_[i];
       }
     } else {
@@ -112,7 +112,7 @@ void HBMesh::set_group(System* system, int mesh_id) {
     if (chiplet->y_ != m_scale_ - 1) {
       for (int i = 0; i < n_port_; i++) {
         chiplet->ypos_link_nodes_[i].get() = NodeID(node_id + m_scale_, mesh_id);
-        chiplet->ypos_link_buffers_[i] =
+        chiplet->ypos_link_buffers_[i].get() =
             get_chiplet(chiplet->ypos_link_nodes_[i])->yneg_in_buffers_[i];
       }
     } else {

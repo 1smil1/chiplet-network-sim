@@ -1,4 +1,6 @@
 #include "fat_tree.h"
+#include <algorithm>
+#include <random>
 
 Leaf::Leaf(int num_rails, int num_endpoints, int num_up_links, int num_vcs, int buffer_size,
            Channel local_channel)
@@ -37,13 +39,13 @@ void Leaf::set_group(System* system, int leaf_id) {
 }
 
 Spine::Spine(int num_rails, int num_spine_sw, int num_down_links, int num_vcs, int buffer_size, Channel global_channel)
-    : num_spine_sw_(num_nodes_), spine_id_(group_id_) {
+    : num_spine_sw_(num_nodes_) {
   num_rails_ = num_rails;
-  num_down_links_ = num_down_links;
+  switch_radix_ = num_down_links;
   num_spine_sw_ = num_spine_sw;
   for (int rail = 0; rail < num_rails; rail++) {
     for (int i = 0; i < num_spine_sw; i++) {
-      nodes_.push_back(new Node(num_down_links_, num_vcs, buffer_size, global_channel));
+      nodes_.push_back(new Node(switch_radix_, num_vcs, buffer_size, global_channel));
     }
   }
 }
@@ -58,8 +60,8 @@ Spine::~Spine() {
 FatTree::FatTree() : num_endpoints_(num_cores_) {
   read_config();
   num_leaf_sw_ = switch_radix_;
-  num_spine_sw_ = switch_radix_ / (down_to_up_ratio_ + 1);
-  endpoints_per_leaf_ = switch_radix_ * down_to_up_ratio_ / (down_to_up_ratio_ + 1);
+  num_spine_sw_ = std::floor(switch_radix_ / (down_to_up_ratio_ + 1));
+  endpoints_per_leaf_ = switch_radix_ - num_spine_sw_;
   num_endpoints_ = num_leaf_sw_ * endpoints_per_leaf_;
   num_nodes_ = num_endpoints_ + num_leaf_sw_ + num_spine_sw_;
   num_groups_ = num_leaf_sw_ + 1;
@@ -84,13 +86,13 @@ FatTree::~FatTree() {
 }
 
 void FatTree::read_config() {
-  switch_radix_ = param->params_ptree.get<int>("Network.switch_radix", 32);
-  down_to_up_ratio_ = param->params_ptree.get<int>("Network.down_to_up_ratio", 3);
+  switch_radix_ = param->params_ptree.get<int>("Network.switch_radix", 51);
+  down_to_up_ratio_ = param->params_ptree.get<int>("Network.down_to_up_ratio", 1);
   num_rails_ = param->params_ptree.get<int>("Network.num_rails", 1);
   assert(switch_radix_ % (down_to_up_ratio_ + 1) == 0);
   algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "MIN");
-  int local_latency = param->params_ptree.get<int>("Network.local_latency", 2);
-  int global_latency = param->params_ptree.get<int>("Network.global_latency", 4);
+  int local_latency = param->params_ptree.get<int>("Network.local_latency", 4);
+  int global_latency = param->params_ptree.get<int>("Network.global_latency", 10);
   local_channel_ = Channel(1, local_latency);
   global_channel_ = Channel(1, global_latency);
 }
@@ -162,7 +164,8 @@ void FatTree::MIN_routing(Packet& s) const {
     }
   } else if (cur_node->group_id_ != dest_node->group_id_) {  // different leaf
     assert(cur_node->node_id_ == endpoints_per_leaf_);         // current node is leaf switch
-    for (int spine = 0; spine < num_spine_sw_; ++spine) {
+    for (int j = 0; j < num_spine_sw_; ++j) {
+      int spine = (j + s.destination_.node_id) % num_spine_sw_;
       // 0..num_endpoints_per_leaf_ - 1 ports are endpoints
       Buffer* next_buffer = cur_node->link_buffers_[endpoints_per_leaf_ + spine];
       for (int i = 0; i < param->vc_number; i++) {
