@@ -21,13 +21,13 @@ RailX2DTorus::~RailX2DTorus() {
 }
 
 void RailX2DTorus::read_config() {
-  m_scale_ = param->params_ptree.get<int>("Network.m_scale", 8);
+  m_scale_ = param->params_ptree.get<int>("Network.m_scale", 4);
   n_port_ = param->params_ptree.get<int>("Network.n_port", 1);
   x_scale_ = param->params_ptree.get<int>("Network.x_scale", 1);
   y_scale_ = param->params_ptree.get<int>("Network.y_scale", 1);
   algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "XY");
   int internal_bandiwdth = param->params_ptree.get<int>("Network.internal_bandwidth", 1);
-  int external_latency = param->params_ptree.get<int>("Network.external_latency", 1);
+  int external_latency = param->params_ptree.get<int>("Network.external_latency", 10);
   internal_HB_link = Channel(internal_bandiwdth, 1);
   external_link = Channel(1, external_latency);
 }

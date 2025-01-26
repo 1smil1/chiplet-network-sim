@@ -31,6 +31,7 @@ class HammingMesh : public System {
   void routing_algorithm(Packet& s) const override;
   void MIN_routing(Packet& s) const;
   void XY_routing(Packet& s, NodeID dest, int vcb) const;
+  void torus_routing(Packet& s) const;
 
   inline ChipletInMesh* get_chiplet(NodeID id) const {
     return static_cast<ChipletInMesh*>(System::get_node(id));

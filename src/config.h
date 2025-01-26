@@ -31,8 +31,7 @@ struct Channel {
   }
 };
 
-const Channel default_channel(1,1);
-const Channel internal_channel(4, 1);
+const Channel default_channel(1, 1);
 const Channel specific_channel(1, 1);
 
 struct Parameters {
@@ -54,6 +53,7 @@ struct Parameters {
 
   // Simulation Parameters
   uint64_t simulation_time;
+  double start_injection;
   double injection_increment;
   int timeout_threshold;
   int timeout_limit;

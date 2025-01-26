@@ -1,9 +1,10 @@
 #include "traffic_manager.h"
+#include "railx_2d_hyperx.h"
 
 #include "boost/dynamic_bitset.hpp"
 
 TrafficManager::TrafficManager() {
-  injection_rate_ = 0;
+  injection_rate_ = param->start_injection;
   traffic_ = param->traffic;
   traffic_scale_ = param->traffic_scale;
   if (traffic_scale_ == 0) traffic_scale_ = network->num_cores_;
@@ -103,7 +104,13 @@ void TrafficManager::print_statistics() {
 }
 
 void TrafficManager::genMes(std::vector<Packet*>& packets, uint64_t cyc) {
-  if (traffic_ == "ring_all_reduce") {
+  if (traffic_ == "torus_all_reduce") {
+    torus_all_reduce_mess(packets);
+    return;
+  } else if (traffic_ == "torus_hirechical_reduce") {
+    torus_hirechical_reduce_mess(packets);
+    return;
+  } else if (traffic_ == "ring_all_reduce") {
     ring_all_reduce_mess(packets);
     return;
   } else if (traffic_ == "ring_all_reduce_bi") {
@@ -309,9 +316,81 @@ void TrafficManager::ring_all_reduce_bi_mess(std::vector<Packet*>& packets) {
           dest1 = (src - 2) % traffic_scale_;
 		  dest2 = (src - 8) % traffic_scale_;
         }
-      } else { // param->topology == "DragonflySW"
+      } 
+      else if (param->topology == "RailX2DHyperX") {
+        assert(traffic_scale_ == 16 && core_per_chip == 16);
+        switch (src) {
+          case 0:
+            dest1 = 1;
+            dest2 = 4;
+            break;
+          case 1:
+            dest1 = 0;
+            dest2 = 2;
+            break;
+          case 2:
+            dest1 = 1;
+            dest2 = 3;
+            break;
+          case 3:
+            dest1 = 2;
+            dest2 = 7;
+            break;
+          case 4:
+            dest1 = 0;
+            dest2 = 8;
+            break;
+          case 5:
+            dest1 = 6;
+            dest2 = 9;
+            break;
+          case 6:
+            dest1 = 5;
+            dest2 = 7;
+            break;
+          case 7: 
+            dest1 = 3;
+            dest2 = 6;
+            break;
+          case 8:
+            dest1 = 4;
+            dest2 = 12;
+            break;
+          case 9:
+            dest1 = 5;
+            dest2 = 10;
+            break;
+          case 10:
+            dest1 = 9;
+            dest2 = 11;
+            break;
+          case 11:
+            dest1 = 10;
+            dest2 = 15;
+            break;
+          case 12:
+            dest1 = 8;
+            dest2 = 13;
+            break;
+          case 13:
+            dest1 = 12;
+            dest2 = 14;
+            break;
+          case 14:
+            dest1 = 13;
+            dest2 = 15;
+            break;
+          case 15:
+            dest1 = 11;
+            dest2 = 14;
+            break;
+          default:
+            break;
+        }
+      }
+      else { // param->topology == "DragonflySW"
         dest1 = (src + 1) % traffic_scale_;
-        dest2  = (src - 1) % traffic_scale_;
+        dest2 = (src - 1 + traffic_scale_) % traffic_scale_;
       }
       Packet* mess =
           new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest1), message_length_);
@@ -321,6 +400,64 @@ void TrafficManager::ring_all_reduce_bi_mess(std::vector<Packet*>& packets) {
       all_message_num_ += 2;
     }
   }
+}
+
+void TrafficManager::torus_all_reduce_mess(std::vector<Packet*>& packets) {
+
+  int core_per_chip = network->groups_[0]->num_cores_;
+  int dest1, dest2;
+  for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ > traffic_scale_ * 4;
+       pkt_for_injection_ -= traffic_scale_ * 4) {
+    if (param->topology == "RailX2DHyperX") {
+      RailX2DHyperX* network_hyperx = static_cast<RailX2DHyperX*>(network);
+      for (int src = 0; src < traffic_scale_; src++) {
+            NodeID src_id = network_hyperx->int_to_nodeid(src);
+            ChipletInMesh* src_chiplet = network_hyperx->get_chiplet(src_id);
+            NodeID dest1 = src_chiplet->xneg_link_nodes_[0];
+            NodeID dest2 = src_chiplet->xpos_link_nodes_[0];
+            NodeID dest3 = src_chiplet->yneg_link_nodes_[0];
+            NodeID dest4 = src_chiplet->ypos_link_nodes_[0];
+            Packet* mess = new Packet(src_id, dest1, message_length_);
+            packets.push_back(mess);
+            mess = new Packet(src_id, dest2, message_length_);
+            packets.push_back(mess);
+            mess = new Packet(src_id, dest3, message_length_);
+            packets.push_back(mess);
+            mess = new Packet(src_id, dest4, message_length_);
+            packets.push_back(mess);
+            all_message_num_ += 4;
+      }
+    }
+  }
+}
+
+void TrafficManager::torus_hirechical_reduce_mess(std::vector<Packet*>& packets) {
+  //int core_per_chip = network->groups_[0]->num_cores_;
+  //int dest1, dest2;
+  //for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ > traffic_scale_ * 4;
+  //     pkt_for_injection_ -= traffic_scale_ * 4) {
+  //  if (param->topology == "RailX2DHyperX") {
+  //    RailX2DHyperX* network_hyperx = static_cast<RailX2DHyperX*>(network);
+  //    for (int src = 0; src < traffic_scale_; src++) {
+  //      NodeID src_id = network_hyperx->int_to_nodeid(src);
+  //      HBMesh* src_mesh = network_hyperx->get_mesh(src_id.group_id);
+  //      ChipletInMesh* src_chiplet = network_hyperx->get_chiplet(src_id);
+  //      NodeID dest1 = src_chiplet->xneg_link_nodes_[0];
+  //      NodeID dest2 = src_chiplet->xpos_link_nodes_[0];
+  //      NodeID dest3 = src_chiplet->yneg_link_nodes_[0];
+  //      NodeID dest4 = src_chiplet->ypos_link_nodes_[0];
+  //      Packet* mess = new Packet(src_id, dest1, message_length_);
+  //      packets.push_back(mess);
+  //      mess = new Packet(src_id, dest2, message_length_);
+  //      packets.push_back(mess);
+  //      mess = new Packet(src_id, dest3, message_length_);
+  //      packets.push_back(mess);
+  //      mess = new Packet(src_id, dest4, message_length_);
+  //      packets.push_back(mess);
+  //      all_message_num_ += 4;
+  //    }
+  //  }
+  //}
 }
 
 // special traffic pattern generated by netrace

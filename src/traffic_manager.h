@@ -28,6 +28,8 @@ class TrafficManager {
   Packet* sd_trace_mess();
   void ring_all_reduce_mess(std::vector<Packet*>& packets);
   void ring_all_reduce_bi_mess(std::vector<Packet*>& packets);
+  void torus_all_reduce_mess(std::vector<Packet*>& packets);
+  void torus_hirechical_reduce_mess(std::vector<Packet*>& packets);
   void netrace(std::vector<Packet*>& packets, uint64_t cyc);
   inline double average_latency() const { return (double)total_cycles_ / message_arrived_; };
   inline double receiving_rate() const {

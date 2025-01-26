@@ -12,7 +12,11 @@ RailX2DHyperX::RailX2DHyperX() : num_mesh_(num_groups_), meshes_(groups_) {
                                  internal_HB_link, external_link));
     meshes_[mesh_id]->set_group(this, mesh_id);
   }
-  hamilton_decomp_ = gen_hamilton_decomp_odd(num_rails_ + 1);
+  if ((num_rails_+1) % 4 == 0) {
+    hamilton_decomp_ = gen_hamilton_decomp_4(num_rails_ + 1);
+  } else if (num_rails_ % 2 == 0) {
+    hamilton_decomp_ = gen_hamilton_decomp_odd(num_rails_ + 1);
+  }
   for (auto& v : hamilton_decomp_) {
     for (auto& i : v) {
       std::cout << i << " ";
@@ -32,8 +36,8 @@ void RailX2DHyperX::read_config() {
   n_port_ = param->params_ptree.get<int>("Network.n_port", 2);
   algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "MIN");
   int internal_bandiwdth = param->params_ptree.get<int>("Network.internal_bandwidth", 2);
-  int external_latency = param->params_ptree.get<int>("Network.external_latency", 4);
-  internal_HB_link = Channel(internal_bandiwdth, 2);
+  int external_latency = param->params_ptree.get<int>("Network.external_latency", 10);
+  internal_HB_link = Channel(internal_bandiwdth, 1);
   external_link = Channel(1, external_latency);
 }
 

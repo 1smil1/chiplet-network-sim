@@ -1,7 +1,7 @@
 #include "hammingmesh.h"
 
 SWforHxMesh::SWforHxMesh(int num_sw_per_dir, int switch_radix, int num_vcs, int buffer_size,
-                         Channel local_channel)
+                         Channel external_link)
     : num_switch_(num_nodes_) {
   switch_radix_ = switch_radix;
   num_sw_per_dir_ = num_sw_per_dir;
@@ -12,7 +12,7 @@ SWforHxMesh::SWforHxMesh(int num_sw_per_dir, int switch_radix, int num_vcs, int 
   // num_sw_per_dir_..num_sw_per_dir_+switch_radix_-1: y switches (rail 0)
   // num_sw_per_dir_+switch_radix_..num_switch_-1: y switches (rail 1)
   for (int i = 0; i < num_switch_; i++) {
-    nodes_.push_back(new Node(switch_radix, num_vcs, buffer_size, local_channel));
+    nodes_.push_back(new Node(switch_radix, num_vcs, buffer_size, external_link));
   }
 }
 
@@ -39,8 +39,8 @@ HammingMesh::HammingMesh() : meshes_(groups_) {
     meshes_[mesh_id]->set_group(this, mesh_id);
     get_mesh(mesh_id)->coordinate_ = {mesh_id % (switch_radix_ / 2), mesh_id / (switch_radix_ / 2)};
   }
-  groups_.push_back(new SWforHxMesh(num_sw_per_dir_, switch_radix_,
-                                    param->vc_number, param->buffer_size, internal_HB_link));
+  groups_.push_back(new SWforHxMesh(num_sw_per_dir_, switch_radix_, param->vc_number,
+                                    param->buffer_size, external_link));
   groups_[num_mesh_]->set_group(this, num_mesh_);
   connect();
   print_config();
@@ -56,7 +56,7 @@ HammingMesh::~HammingMesh() {
 void HammingMesh::read_config() {
   m_scale_ = param->params_ptree.get<int>("Network.m_scale", 4);
   n_port_ = param->params_ptree.get<int>("Network.n_port", 2);
-  switch_radix_ = param->params_ptree.get<int>("Network.switch_radix", 32);
+  switch_radix_ = param->params_ptree.get<int>("Network.switch_radix", 18);
   algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "MIN");
   int internal_bandiwdth = param->params_ptree.get<int>("Network.internal_bandwidth", 2);
   int external_latency = param->params_ptree.get<int>("Network.external_latency", 4);
@@ -122,7 +122,13 @@ void HammingMesh::MIN_routing(Packet& s) const {
     SWforHxMesh* sw_layer = get_sw_layer();
     Node* cur_switch = get_switch(s.head_trace().id);
     if (cur_switch->node_id_ < num_sw_per_dir_) {  // x switches
-      if (dest_chip_x < m_scale_ / 2) {
+      if (dest_chip_x * 2 == m_scale_ - 1) {
+        int port_id = dest_mesh_x * 2;
+        s.candidate_channels_.push_back(VCInfo(cur_switch->ports_[port_id]->link_buffer, 1));
+        port_id = dest_mesh_x * 2 + 1;
+        s.candidate_channels_.push_back(VCInfo(cur_switch->ports_[port_id]->link_buffer, 1));
+      }
+      else if (dest_chip_x < m_scale_ / 2) {
         int port_id = dest_mesh_x * 2;
         s.candidate_channels_.push_back(VCInfo(cur_switch->ports_[port_id]->link_buffer, 1));
       } else {  // dest_chip_x >= m_scale_ / 2
@@ -130,10 +136,16 @@ void HammingMesh::MIN_routing(Packet& s) const {
         s.candidate_channels_.push_back(VCInfo(cur_switch->ports_[port_id]->link_buffer, 1));
       }
     } else {  // cur_switch->node_id_ >= num_sw_per_dir_  y switches
-      if (dest_mesh_y < switch_radix_ / 2) {
+      if (dest_chip_y * 2 == m_scale_ - 1) {
         int port_id = dest_mesh_y * 2;
         s.candidate_channels_.push_back(VCInfo(cur_switch->ports_[port_id]->link_buffer, 2));
-      } else {  // dest_mesh_y >= switch_radix_ / 2
+        port_id = dest_mesh_y * 2 + 1;
+        s.candidate_channels_.push_back(VCInfo(cur_switch->ports_[port_id]->link_buffer, 2));
+      }
+      else if (dest_chip_y < m_scale_ / 2) {
+        int port_id = dest_mesh_y * 2;
+        s.candidate_channels_.push_back(VCInfo(cur_switch->ports_[port_id]->link_buffer, 2));
+      } else {  // dest_chip_y >= m_scale_ / 2
         int port_id = dest_mesh_y * 2 + 1;
         s.candidate_channels_.push_back(VCInfo(cur_switch->ports_[port_id]->link_buffer, 2));
       }
@@ -150,52 +162,78 @@ void HammingMesh::MIN_routing(Packet& s) const {
     if (current_mesh->mesh_id_ == dest_mesh->mesh_id_) {
       XY_routing(s, s.destination_, 2);
     } else {
+      int rantint = rand();
       if (cur_mesh_x != dest_mesh_x) {  // x-first
         if (cur_chip_x == 0) {          // x-neg edge to the fat-tree
           for (int i = 0; i < n_port_; i++) {
-            s.candidate_channels_.push_back(VCInfo(current_chiplet->xneg_link_buffers_[i], 1));
+            int plane = (i + rantint) % n_port_;
+            s.candidate_channels_.push_back(VCInfo(current_chiplet->xneg_link_buffers_[plane], 1));
           }
         } else if (cur_chip_x == m_scale_ - 1) {  // x-pos edge to the fat-tree
           for (int i = 0; i < n_port_; i++) {
-            s.candidate_channels_.push_back(VCInfo(current_chiplet->xpos_link_buffers_[i], 1));
+            int plane = (i + rantint) % n_port_;
+            s.candidate_channels_.push_back(VCInfo(current_chiplet->xpos_link_buffers_[plane], 1));
           }
-        } else if (cur_chip_x < m_scale_ / 2) {  // to x-neg edge
+        } else if (cur_chip_x * 2 == m_scale_ - 1) {
           for (int i = 0; i < n_port_; i++) {
-            s.candidate_channels_.push_back(VCInfo(current_chiplet->xneg_link_buffers_[i], 0));
+            int plane = (i + rantint) % n_port_;
+            s.candidate_channels_.push_back(VCInfo(current_chiplet->xneg_link_buffers_[plane], 1));
+          }
+          for (int i = 0; i < n_port_; i++) {
+            int plane = (i + rantint) % n_port_;
+            s.candidate_channels_.push_back(VCInfo(current_chiplet->xpos_link_buffers_[plane], 1));
+          }
+        }
+        else if (cur_chip_x < m_scale_ / 2) {  // to x-neg edge
+          for (int i = 0; i < n_port_; i++) {
+            int plane = (i + rantint) % n_port_;
+            s.candidate_channels_.push_back(VCInfo(current_chiplet->xneg_link_buffers_[plane], 0));
           }
         } else if (cur_chip_x >= m_scale_ / 2) {  // to x-pos edge
           for (int i = 0; i < n_port_; i++) {
-            s.candidate_channels_.push_back(VCInfo(current_chiplet->xpos_link_buffers_[i], 0));
+            int plane = (i + rantint) % n_port_;
+            s.candidate_channels_.push_back(VCInfo(current_chiplet->xpos_link_buffers_[plane], 0));
           }
         }
       } else {
         assert(cur_mesh_x == dest_mesh_x);
         if (cur_chip_x < dest_chip_x) {
           for (int i = 0; i < n_port_; i++) {
-            s.candidate_channels_.push_back(VCInfo(current_chiplet->xpos_link_buffers_[i], 0));
+            int plane = (i + rantint) % n_port_;
+            s.candidate_channels_.push_back(VCInfo(current_chiplet->xpos_link_buffers_[plane], 0));
           }
         } else if (cur_chip_x > dest_chip_x) {
           for (int i = 0; i < n_port_; i++) {
-            s.candidate_channels_.push_back(VCInfo(current_chiplet->xneg_link_buffers_[i], 0));
+            int plane = (i + rantint) % n_port_;
+            s.candidate_channels_.push_back(VCInfo(current_chiplet->xneg_link_buffers_[plane], 0));
           }
         } else {  // in same y-column
           assert(cur_chip_x == dest_chip_x);
           assert(cur_mesh_y != dest_mesh_y);
+        //{
           if (cur_chip_y == 0) {  // y-neg edge to the fat-tree
             for (int i = 0; i < n_port_; i++) {
-              s.candidate_channels_.push_back(VCInfo(current_chiplet->yneg_link_buffers_[i], 2));
+              int plane = (i + rantint) % n_port_;
+              s.candidate_channels_.push_back(
+                  VCInfo(current_chiplet->yneg_link_buffers_[plane], 2));
             }
           } else if (cur_chip_y == m_scale_ - 1) {  // y-pos edge to the fat-tree
             for (int i = 0; i < n_port_; i++) {
-              s.candidate_channels_.push_back(VCInfo(current_chiplet->ypos_link_buffers_[i], 2));
+              int plane = (i + rantint) % n_port_;
+              s.candidate_channels_.push_back(
+                  VCInfo(current_chiplet->ypos_link_buffers_[plane], 2));
             }
           } else if (cur_chip_y < m_scale_ / 2) {  // to y-neg edge
             for (int i = 0; i < n_port_; i++) {
-              s.candidate_channels_.push_back(VCInfo(current_chiplet->yneg_link_buffers_[i], 1));
+              int plane = (i + rantint) % n_port_;
+              s.candidate_channels_.push_back(
+                  VCInfo(current_chiplet->yneg_link_buffers_[plane], 1));
             }
           } else if (cur_chip_y >= m_scale_ / 2) {  // to y-pos edge
             for (int i = 0; i < n_port_; i++) {
-              s.candidate_channels_.push_back(VCInfo(current_chiplet->ypos_link_buffers_[i], 1));
+              int plane = (i + rantint) % n_port_;
+              s.candidate_channels_.push_back(
+                  VCInfo(current_chiplet->ypos_link_buffers_[plane], 1));
             }
           }
         }
@@ -203,8 +241,6 @@ void HammingMesh::MIN_routing(Packet& s) const {
     }
   
   }
-
-  
 }
 
 void HammingMesh::XY_routing(Packet& s, NodeID dest, int vcb) const {
@@ -237,3 +273,5 @@ void HammingMesh::XY_routing(Packet& s, NodeID dest, int vcb) const {
       }
   }
 }
+
+void HammingMesh::torus_routing(Packet& s) const {}

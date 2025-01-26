@@ -134,8 +134,13 @@ void System::update(Packet& p) {
   assert(p.link_timer_ > 0 || p.destination_ != p.tail_trace().id);
 
   p.trans_timer_++;
-  if (p.wait_timer_ == timeout_time_)  // timeout
+  if (p.wait_timer_ == timeout_time_) {  // timeout
     TM->message_timeout_++;
+#ifdef DEBUG
+    std::cout << p.source_ << " -> " << p.head_trace().id << " -> " << p.destination_ << " timeout!"
+              << std::endl;
+#endif  // DEBUG
+  }
 
   // Processing at source node before transmission (Packetization, injection, etc.)
   if (p.head_trace().id == p.source_ && p.process_timer_ > 0) {
