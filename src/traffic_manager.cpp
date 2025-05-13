@@ -20,10 +20,20 @@ TrafficManager::TrafficManager() {
     nt_disable_dependencies(CTX);
     nt_print_trheader(CTX);
   }
+  std::filesystem::path dirPath = std::filesystem::path(param->output_file).parent_path();
+  if (!dirPath.empty() && !std::filesystem::exists(dirPath)) 
+    std::filesystem::create_directories(dirPath);
   output_.open(param->output_file, std::fstream::out);
+  dirPath = std::filesystem::path(param->log_file).parent_path();
+  if (!dirPath.empty() && !std::filesystem::exists(dirPath)) 
+    std::filesystem::create_directories(dirPath);
   log_.open(param->log_file, std::fstream::out);
 
   pkt_for_injection_ = 0;
+  cycles = 0;
+  is_done = false;
+  data_size = 1;
+  throughput = 0;
   // statistics
   time_ = std::chrono::system_clock::now();
   all_message_num_.store(0);
@@ -58,6 +68,10 @@ TrafficManager::~TrafficManager() {
 
 void TrafficManager::reset() {
   pkt_for_injection_ = 0;
+  cycles = 0;
+  is_done = false;
+  data_size = 1;
+  throughput = 0;
   time_ = std::chrono::system_clock::now();
   all_message_num_.store(0);
   message_arrived_.store(0);
@@ -103,8 +117,23 @@ void TrafficManager::print_statistics() {
 #endif  // DEBUG
 }
 
+void TrafficManager::print_collective_statistics() {
+  std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - time_;
+  std::cout << std::endl
+            << "Time elapsed: " << elapsed_seconds.count() << "s" << std::endl
+            << "Data size: " << data_size << " flits"
+            << "  Cycles: " << cycles << std::endl
+            << "Throughput: " << throughput << " flits/(node*cycle)" << std::endl;
+  output_ << injection_rate_ << "," << throughput << std::endl;
+}
+
 void TrafficManager::genMes(std::vector<Packet*>& packets, uint64_t cyc) {
-  if (traffic_ == "torus_all_reduce") {
+  cycles++;
+  if (traffic_ == "collective_allreduce_torus") {
+    allreduce_torus(packets);
+    return;
+  }
+  else if (traffic_ == "torus_all_reduce") {
     torus_all_reduce_mess(packets);
     return;
   } else if (traffic_ == "torus_hirechical_reduce") {
@@ -268,198 +297,6 @@ Packet* TrafficManager::sd_trace_mess() {
   return new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest), message_length_);
 }
 
-// special traffic pattern for Dragonfly
-void TrafficManager::ring_all_reduce_mess(std::vector<Packet*>& packets) {
-  int core_per_chip = network->groups_[0]->num_cores_;
-  int dest1;
-  for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ > traffic_scale_;
-       pkt_for_injection_ -= traffic_scale_) {
-    for (int src = 0; src < traffic_scale_; src++) {
-      if (param->topology == "DragonflyChiplet") {
-        if (src % 16 == 0 || src % 16 == 1 || src % 16 == 4 || src % 16 == 5)
-          dest1 = (src + 2) % traffic_scale_;
-        else if (src % 16 == 2 || src % 16 == 3 || src % 16 == 6 || src % 16 == 7)
-          dest1 = (src + 8) % traffic_scale_;
-        else if (src % 16 == 8 || src % 16 == 9 || src % 16 == 12 || src % 16 == 13)
-          dest1 = (src + 8) % traffic_scale_;
-        else if (src % 16 == 10 || src % 16 == 11 || src % 16 == 14 || src % 16 == 15)
-          dest1 = (src - 2) % traffic_scale_;
-      }
-      else // param->topology == "DragonflySW"
-		dest1 = (src + 1) % traffic_scale_;
-      Packet* mess =
-          new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest1), message_length_);
-      packets.push_back(mess);
-      all_message_num_ += 1;
-    }
-  }
-}
-
-// special traffic pattern for Dragonfly
-void TrafficManager::ring_all_reduce_bi_mess(std::vector<Packet*>& packets) {
-  int core_per_chip = network->groups_[0]->num_cores_;
-  int dest1, dest2;
-  for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ > traffic_scale_ * 2;
-       pkt_for_injection_ -= traffic_scale_ * 2) {
-    for (int src = 0; src < traffic_scale_; src++) {
-      if (param->topology == "DragonflyChiplet") {
-        if (src % 16 == 0 || src % 16 == 1 || src % 16 == 4 || src % 16 == 5) {
-          dest1 = (src + 2) % traffic_scale_;
-          dest2 = (src - 8 + traffic_scale_) % traffic_scale_;
-        } else if (src % 16 == 2 || src % 16 == 3 || src % 16 == 6 || src % 16 == 7) {
-          dest1 = (src + 8) % traffic_scale_;
-          dest2 = (src - 2) % traffic_scale_;
-        } else if (src % 16 == 8 || src % 16 == 9 || src % 16 == 12 || src % 16 == 13) {
-          dest1 = (src + 8) % traffic_scale_;
-          dest2 = (src + 2) % traffic_scale_;
-        } else if (src % 16 == 10 || src % 16 == 11 || src % 16 == 14 || src % 16 == 15) {
-          dest1 = (src - 2) % traffic_scale_;
-		  dest2 = (src - 8) % traffic_scale_;
-        }
-      } 
-      else if (param->topology == "RailX2DHyperX") {
-        assert(traffic_scale_ == 16 && core_per_chip == 16);
-        switch (src) {
-          case 0:
-            dest1 = 1;
-            dest2 = 4;
-            break;
-          case 1:
-            dest1 = 0;
-            dest2 = 2;
-            break;
-          case 2:
-            dest1 = 1;
-            dest2 = 3;
-            break;
-          case 3:
-            dest1 = 2;
-            dest2 = 7;
-            break;
-          case 4:
-            dest1 = 0;
-            dest2 = 8;
-            break;
-          case 5:
-            dest1 = 6;
-            dest2 = 9;
-            break;
-          case 6:
-            dest1 = 5;
-            dest2 = 7;
-            break;
-          case 7: 
-            dest1 = 3;
-            dest2 = 6;
-            break;
-          case 8:
-            dest1 = 4;
-            dest2 = 12;
-            break;
-          case 9:
-            dest1 = 5;
-            dest2 = 10;
-            break;
-          case 10:
-            dest1 = 9;
-            dest2 = 11;
-            break;
-          case 11:
-            dest1 = 10;
-            dest2 = 15;
-            break;
-          case 12:
-            dest1 = 8;
-            dest2 = 13;
-            break;
-          case 13:
-            dest1 = 12;
-            dest2 = 14;
-            break;
-          case 14:
-            dest1 = 13;
-            dest2 = 15;
-            break;
-          case 15:
-            dest1 = 11;
-            dest2 = 14;
-            break;
-          default:
-            break;
-        }
-      }
-      else { // param->topology == "DragonflySW"
-        dest1 = (src + 1) % traffic_scale_;
-        dest2 = (src - 1 + traffic_scale_) % traffic_scale_;
-      }
-      Packet* mess =
-          new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest1), message_length_);
-      packets.push_back(mess);
-      mess = new Packet(network->int_to_nodeid(src), network->int_to_nodeid(dest2), message_length_);
-      packets.push_back(mess);
-      all_message_num_ += 2;
-    }
-  }
-}
-
-void TrafficManager::torus_all_reduce_mess(std::vector<Packet*>& packets) {
-
-  int core_per_chip = network->groups_[0]->num_cores_;
-  int dest1, dest2;
-  for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ > traffic_scale_ * 4;
-       pkt_for_injection_ -= traffic_scale_ * 4) {
-    if (param->topology == "RailX2DHyperX") {
-      RailX2DHyperX* network_hyperx = static_cast<RailX2DHyperX*>(network);
-      for (int src = 0; src < traffic_scale_; src++) {
-            NodeID src_id = network_hyperx->int_to_nodeid(src);
-            ChipletInMesh* src_chiplet = network_hyperx->get_chiplet(src_id);
-            NodeID dest1 = src_chiplet->xneg_link_nodes_[0];
-            NodeID dest2 = src_chiplet->xpos_link_nodes_[0];
-            NodeID dest3 = src_chiplet->yneg_link_nodes_[0];
-            NodeID dest4 = src_chiplet->ypos_link_nodes_[0];
-            Packet* mess = new Packet(src_id, dest1, message_length_);
-            packets.push_back(mess);
-            mess = new Packet(src_id, dest2, message_length_);
-            packets.push_back(mess);
-            mess = new Packet(src_id, dest3, message_length_);
-            packets.push_back(mess);
-            mess = new Packet(src_id, dest4, message_length_);
-            packets.push_back(mess);
-            all_message_num_ += 4;
-      }
-    }
-  }
-}
-
-void TrafficManager::torus_hirechical_reduce_mess(std::vector<Packet*>& packets) {
-  //int core_per_chip = network->groups_[0]->num_cores_;
-  //int dest1, dest2;
-  //for (pkt_for_injection_ += message_per_cycle(); pkt_for_injection_ > traffic_scale_ * 4;
-  //     pkt_for_injection_ -= traffic_scale_ * 4) {
-  //  if (param->topology == "RailX2DHyperX") {
-  //    RailX2DHyperX* network_hyperx = static_cast<RailX2DHyperX*>(network);
-  //    for (int src = 0; src < traffic_scale_; src++) {
-  //      NodeID src_id = network_hyperx->int_to_nodeid(src);
-  //      HBMesh* src_mesh = network_hyperx->get_mesh(src_id.group_id);
-  //      ChipletInMesh* src_chiplet = network_hyperx->get_chiplet(src_id);
-  //      NodeID dest1 = src_chiplet->xneg_link_nodes_[0];
-  //      NodeID dest2 = src_chiplet->xpos_link_nodes_[0];
-  //      NodeID dest3 = src_chiplet->yneg_link_nodes_[0];
-  //      NodeID dest4 = src_chiplet->ypos_link_nodes_[0];
-  //      Packet* mess = new Packet(src_id, dest1, message_length_);
-  //      packets.push_back(mess);
-  //      mess = new Packet(src_id, dest2, message_length_);
-  //      packets.push_back(mess);
-  //      mess = new Packet(src_id, dest3, message_length_);
-  //      packets.push_back(mess);
-  //      mess = new Packet(src_id, dest4, message_length_);
-  //      packets.push_back(mess);
-  //      all_message_num_ += 4;
-  //    }
-  //  }
-  //}
-}
-
 // special traffic pattern generated by netrace
 void TrafficManager::netrace(std::vector<Packet*>& vecmess, uint64_t cyc) {
   int src, dest;
@@ -470,7 +307,7 @@ void TrafficManager::netrace(std::vector<Packet*>& vecmess, uint64_t cyc) {
   else if ((cyc + 1) % 100000000 == 0) {
     print_statistics();
   }
-  while ((CTX->latest_active_packet_cycle == cyc)) {
+  while (CTX->latest_active_packet_cycle == cyc) {
     trace_packet = nt_read_packet(CTX);
     if (trace_packet == nullptr)
       return;

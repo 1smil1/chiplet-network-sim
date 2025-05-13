@@ -4,7 +4,7 @@ project (ChipletNetworkSim VERSION 1.0.1
 						   DESCRIPTION "A cycle-accurate packet-parallel network simulator."
                            LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 if(MSVC)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
@@ -23,8 +23,9 @@ endif()
 aux_source_directory(src SRC_FILES)
 aux_source_directory(src/netrace NETRACE_FILES)
 aux_source_directory(src/topologies TOPOLOGY_FILES)
-add_executable (${PROJECT_NAME} ${SRC_FILES} ${NETRACE_FILES} ${TOPOLOGY_FILES} "src/topologies/hammingmesh.cpp")
-target_include_directories(${PROJECT_NAME} PUBLIC src src/netrace src/topologies)
+aux_source_directory(src/traffic TRAFFIC_FILES)
+add_executable (${PROJECT_NAME} ${SRC_FILES} ${NETRACE_FILES} ${TOPOLOGY_FILES} ${TRAFFIC_FILES})
+target_include_directories(${PROJECT_NAME} PUBLIC src src/netrace src/topologies src/traffic)
 
 if(MSVC)
 target_link_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:RELWITHDEBINFO>:/PROFILE>)

@@ -40,10 +40,12 @@ class CGroup : public Group {
   ~CGroup();
 
   void set_group(System* dragonfly, int Cgroup_id) override;
-  inline NodeInCG* get_node(int chiplet_id) const {
+  inline NodeInCG* get_node(int chiplet_id) const override {
     return static_cast<NodeInCG*>(Group::get_node(chiplet_id));
   }
-  inline NodeInCG* get_node(NodeID id) const { return static_cast<NodeInCG*>(Group::get_node(id)); }
+  inline NodeInCG* get_node(NodeID id) const override { 
+    return static_cast<NodeInCG*>(Group::get_node(id)); 
+  }
 
   DragonflyChiplet* dragonfly_;
   int& num_chiplets_;
@@ -77,7 +79,7 @@ class DragonflyChiplet : public System {
   void XY_routing(Packet& s, NodeID dest, int vcb) const;
   void XY_adaptive_routing(Packet& s, NodeID dest) const;
 
-  inline NodeInCG* get_node(NodeID id) const {
+  inline NodeInCG* get_node(NodeID id) const override {
     return static_cast<NodeInCG*>(System::get_node(id));
   }
   inline CGroup* get_cgroup(NodeID id) const { return static_cast<CGroup*>(get_group(id.group_id)); }

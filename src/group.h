@@ -21,7 +21,8 @@ class Group {
   int group_id_;
   std::vector<int> group_coordinate_;
   int num_nodes_;
-  int num_cores_;
+  // A core wil send/recv packets while a non-core node only for switching.
+  int num_cores_; 
 
   friend TrafficManager;
  protected:

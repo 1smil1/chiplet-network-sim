@@ -119,7 +119,6 @@ void HammingMesh::MIN_routing(Packet& s) const {
 
   
   if (s.head_trace().id.group_id == num_mesh_) { // routing in switch layer
-    SWforHxMesh* sw_layer = get_sw_layer();
     Node* cur_switch = get_switch(s.head_trace().id);
     if (cur_switch->node_id_ < num_sw_per_dir_) {  // x switches
       if (dest_chip_x * 2 == m_scale_ - 1) {

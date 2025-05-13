@@ -73,7 +73,6 @@ void RailX2DHyperX::routing_algorithm(Packet& s) const {
 
 void RailX2DHyperX::MIN_routing(Packet& s) const {
   ChipletInMesh* current_chiplet = get_chiplet(s.head_trace().id);
-  ChipletInMesh* destination_chiplet = get_chiplet(s.destination_);
   
   HBMesh* current_mesh = get_mesh(s.head_trace().id.group_id);
   HBMesh* dest_mesh = get_mesh(s.destination_.group_id);

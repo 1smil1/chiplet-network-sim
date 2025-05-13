@@ -59,6 +59,7 @@ void System::reset() {
   }
 }
 
+// All stages can be finished in one cycle
 void System::onestage(Packet& p) {
   if (p.candidate_channels_.empty()) routing(p);
   if (!p.candidate_channels_.empty() && p.next_vc_.buffer == nullptr)  // VC Allocating Stage
@@ -67,6 +68,8 @@ void System::onestage(Packet& p) {
     switch_allocate(p);
 }
 
+// First stage: routing + VC allocating
+// Second stage: switch allocating
 void System::twostage(Packet& p) {
   if (p.candidate_channels_.empty()) routing(p);
   if (!p.candidate_channels_.empty() && p.next_vc_.buffer == nullptr)  // VC Allocating Stage
@@ -75,6 +78,9 @@ void System::twostage(Packet& p) {
     switch_allocate(p);
 }
 
+// First stage: routing
+// Second stage: VC allocating
+// Third stage: switch allocating
 void System::Threestage(Packet& p) {
   if (p.candidate_channels_.empty())  // Routing Stage
     routing(p);
@@ -96,7 +102,7 @@ void System::vc_allocate(Packet& p) const {
       current_vc.head_packet() == &p) {  // the packet is at the source or at the front of the queue
     for (auto& vc : p.candidate_channels_) {
       if (vc.buffer->is_empty(vc.vcb))                        // try to allocate a empty vc
-        if (vc.buffer->allocate_buffer(vc.vcb, p.length_)) {  // packet switching
+        if (vc.buffer->allocate_buffer(vc.vcb, p.length_)) {  // virtual cut-through
           // allocating sucessed
           p.next_vc_ = vc;
           return;
@@ -192,15 +198,16 @@ void System::update(Packet& p) {
   } else {
     temp1 = p.head_trace();
     // find the flit that fall behind the head flit
-    while (i < p.length_ && p.flit_trace_[i].id == temp1.id) i++;
+    while (i < p.length_ && p.flit_trace_[i].id == temp1.id)            
+      i++;
   }
 
   if (i < p.length_) {  // there is flits fall behind
     temp2 = p.flit_trace_[i];
-    int k = temp1.buffer->channel_.width;  // linkwidth
+    int linkwidth = temp1.buffer->channel_.width;  // linkwidth
     int j = 0;
     while (i < p.length_) {
-      if (p.flit_trace_[i].id == temp2.id && j < k) {
+      if (p.flit_trace_[i].id == temp2.id && j < linkwidth) {
         assert(p.flit_trace_[i].id != temp1.id);
         p.flit_trace_[i] = temp1;
         j++;
@@ -208,13 +215,13 @@ void System::update(Packet& p) {
         if (p.flit_trace_[i].id != temp2.id) {
           temp1 = temp2;
           temp2 = p.flit_trace_[i];
-          k = temp1.buffer->channel_.width;
+          linkwidth = temp1.buffer->channel_.width;
           j = 0;
           assert(p.flit_trace_[i].id != temp1.id);
           p.flit_trace_[i] = temp1;
           j++;
         } else {
-          assert(j == k);
+          assert(j == linkwidth);
         }
       }
       i++;

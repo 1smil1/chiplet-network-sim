@@ -147,7 +147,21 @@ int main(int argc, char* argv[]) {
     }
     TM->print_statistics();
     nt_close_trfile(TM->CTX);
-  } else {  // gradually increase the injection rate to find the saturation point
+  } 
+  else if (param->traffic.find("collective") != std::string::npos) {
+    for (int i = 4; i < 10; i++) {
+      TM->reset();
+      TM->data_size = TM->traffic_scale_ * (1 << i);
+      while (true){
+        TM->genMes(all_packets);
+        run_one_cycle(all_packets, network);
+        if (TM->is_done) break;
+      }
+      TM->print_statistics();
+      TM->print_collective_statistics();
+    }
+  }
+  else {  // gradually increase the injection rate to find the saturation point
     bool saturated = false;
     while (!saturated) {
       TM->injection_rate_ += param->injection_increment;

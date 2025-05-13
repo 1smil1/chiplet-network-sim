@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 
 #include "system.h"
 extern "C" {
@@ -29,6 +30,7 @@ class TrafficManager {
   void ring_all_reduce_mess(std::vector<Packet*>& packets);
   void ring_all_reduce_bi_mess(std::vector<Packet*>& packets);
   void torus_all_reduce_mess(std::vector<Packet*>& packets);
+  void allreduce_torus(std::vector<Packet*>& packets);
   void torus_hirechical_reduce_mess(std::vector<Packet*>& packets);
   void netrace(std::vector<Packet*>& packets, uint64_t cyc);
   inline double average_latency() const { return (double)total_cycles_ / message_arrived_; };
@@ -37,6 +39,7 @@ class TrafficManager {
   };
 
   void print_statistics();
+  void print_collective_statistics();
 
   std::fstream trace_;
   nt_context_t* CTX;
@@ -53,6 +56,10 @@ class TrafficManager {
 
   std::unordered_map<Buffer*, std::atomic_uint64_t> traffic_map_;
   double pkt_for_injection_;
+  uint64_t cycles;
+  bool is_done;
+  uint64_t data_size;
+  double throughput;
   std::chrono::system_clock::time_point time_;
   // atomic statistics, modified by all threds
   std::atomic_uint64_t all_message_num_;

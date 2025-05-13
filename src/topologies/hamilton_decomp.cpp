@@ -117,6 +117,7 @@ int in_which_cycle(std::pair<int, int> link, const std::vector<std::vector<int>>
     }
   }
   assert(false && "Invalid link in the Hamiltonian decomposition!");
+  return -1;  // This line will never be reached
 }
 
 bool check_hamilton_decomp(const std::vector<std::vector<int>>& hcycle, int n) {

@@ -148,7 +148,6 @@ void FatTree::MIN_routing(Packet& s) const {
 
   if (cur_node->group_id_ < num_leaf_sw_per_rail_ &&
       cur_node->node_id_ < endpoints_per_leaf_) {  // current node is endpoint
-    int randint = rand();
     for (int r = 0; r < num_rails_; r++) {
       int rail = (rand() + r) % num_rails_;
       Buffer* next_buffer = cur_node->link_buffers_[rail];

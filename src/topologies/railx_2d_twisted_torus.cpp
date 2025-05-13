@@ -218,7 +218,7 @@ void RailX2DTwistedTorus::XY_routing(Packet& s) const
         return;
     }
     assert(x_scale_ / 2 == y_scale_);
-    unsigned int a = x_scale_ * m_scale_ / 2;
+    int a = x_scale_ * m_scale_ / 2;
 
     // Computes all possible coordinate differences (dx, dy) that the
     // twisted torus wraparounds allow
