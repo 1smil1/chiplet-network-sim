@@ -17,7 +17,7 @@ Parameters::Parameters(const std::string &config_file) {
 
   start_injection = params_ptree.get<double>("Simulation.start_injection", 0);
   injection_increment = params_ptree.get<double>("Simulation.injection_increment", 0.01);
-  simulation_time = params_ptree.get<uint64_t>("Simulation.simulation_time", 2000);
+  simulation_time = params_ptree.get<uint64_t>("Simulation.simulation_time", 5000);
   timeout_threshold = params_ptree.get<int>("Simulation.timeout_threshold", 500);
   timeout_limit = params_ptree.get<int>("Simulation.timeout_limit", 0);
   threads = params_ptree.get<int>("Simulation.threads", 1);
