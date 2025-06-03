@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
     nt_close_trfile(TM->CTX);
   } 
   else if (param->traffic.find("collective") != std::string::npos) {
-    for (int i = 4; i < 10; i++) {
+    for (int i = 2; i < 10; i++) {
       TM->reset();
       TM->data_size = TM->traffic_scale_ * (1 << i);
       while (true){
@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
         run_one_cycle(all_packets, network);
         if (TM->is_done) break;
       }
-      TM->print_statistics();
+      // TM->print_statistics();
       TM->print_collective_statistics();
     }
   }
