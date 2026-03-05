@@ -1,0 +1,36 @@
+# 16节点顺序注入示例
+# 演示如何只用先后顺序来控制注入
+
+topology:
+  k_node: 2
+  k_chip: 2
+
+# 任务按照cycle顺序注入，不需要指定具体时间
+tasks:
+  # 第1个任务，cycle=0立即注入
+  - src: 0
+    dst: 5
+    cycle: 0
+    size: 64
+
+  # 第2个任务，cycle=1紧接着注入
+  - src: 0
+    dst: 2
+    cycle: 1
+    size: 128
+
+  # 第3个任务，cycle=2继续
+  - src: 0
+    dst: 8
+    cycle: 2
+    size: 128
+
+  # 第4个任务，cycle=3最后
+  - src: 0
+    dst: 15
+    cycle: 3
+    size: 256
+
+simulation:
+  benchmark_name: "sequential_test"
+  notes: "演示按顺序注入"

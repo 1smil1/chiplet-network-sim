@@ -1,0 +1,51 @@
+# 16节点简单通信场景
+# 包含芯粒内、相邻芯粒、对角芯粒通信示例
+#
+# 实际节点布局（根据id_to_coords映射）:
+#   全局坐标:
+#     x=0  x=1  x=2  x=3
+#   y=0:  0    1    2    3     Chiplet(0,0) | Chiplet(1,0)
+#   y=1:  4    5    6    7
+#        ──────────────────
+#   y=2:  8    9   10   11     Chiplet(0,1) | Chiplet(1,1)
+#   y=3: 12   13   14   15
+#
+#   芯粒分布:
+#     Chiplet(0,0): 0,1,4,5     Chiplet(1,0): 2,3,6,7
+#     Chiplet(0,1): 8,9,12,13   Chiplet(1,1): 10,11,14,15
+
+topology:
+  k_node: 2          # 每个芯粒2x2节点
+  k_chip: 2          # 2x2芯粒阵列
+  total_nodes: 16    # 总节点数
+
+# 通信任务列表
+tasks:
+  # 任务1: 芯粒内通信 - Chiplet(0,0)内部
+  - src: 0           # 节点0: Chiplet(0,0) Node(0,0)
+    dst: 5           # 节点5: Chiplet(0,0) Node(1,1)
+    cycle: 0         # 在第0个周期注入
+    size: 64         # 数据包大小（bytes）
+
+  # 任务2: 水平跨芯粒通信 - Chiplet(0,0) → Chiplet(1,0)
+  - src: 0           # 节点0: Chiplet(0,0) Node(0,0)
+    dst: 2           # 节点2: Chiplet(1,0) Node(0,0)
+    cycle: 10
+    size: 128
+
+  # 任务3: 垂直跨芯粒通信 - Chiplet(0,0) → Chiplet(0,1)
+  - src: 0           # 节点0: Chiplet(0,0) Node(0,0)
+    dst: 8           # 节点8: Chiplet(0,1) Node(0,0)
+    cycle: 20
+    size: 128
+
+  # 任务4: 对角跨芯粒通信 - Chiplet(0,0) → Chiplet(1,1)
+  - src: 0           # 节点0: Chiplet(0,0) Node(0,0)
+    dst: 15          # 节点15: Chiplet(1,1) Node(1,1)
+    cycle: 30
+    size: 256
+
+# 仿真配置（可选）
+simulation:
+  benchmark_name: "simple_16node"
+  notes: "简单16节点通信场景"

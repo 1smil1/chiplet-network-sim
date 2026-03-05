@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake:*)",
+      "Bash(python create_netrace.py:*)",
+      "Bash(./ChipletNetworkSim.exe:*)",
+      "Bash(python task_to_netrace.py:*)",
+      "Bash(python:*)",
+      "Bash(xxd:*)"
+    ]
+  }
+}
