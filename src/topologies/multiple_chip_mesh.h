@@ -10,11 +10,12 @@ class MultiChipMesh : public System {
   void read_config() override;
 
   inline NodeID id2nodeid(int id) const override {
-    int K = k_node_ * k_chip_;
-    int x = id % K;
-    int y = id / K;
+    int K_x = k_node_ * chip_w_;
+    int K_y = k_node_ * chip_h_;
+    int x = id % K_x;
+    int y = id / K_x;
     int node_id = x % k_node_ + (y % k_node_) * k_node_;
-    int chip_id = x / k_node_ + (y / k_node_) * k_chip_;
+    int chip_id = x / k_node_ + (y / k_node_) * chip_w_;
     return NodeID(node_id, chip_id);
   }
   inline NodeMesh* get_node(NodeID id) const override {
@@ -36,7 +37,9 @@ class MultiChipMesh : public System {
   std::string algorithm_;
 
   int k_node_;
-  int k_chip_;
+  int k_chip_;      // Deprecated: kept for backward compatibility
+  int chip_w_;      // Chiplet grid width (NEW)
+  int chip_h_;      // Chiplet grid height (NEW)
 
   std::string d2d_IF_;
 };

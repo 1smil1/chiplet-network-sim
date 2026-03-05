@@ -3,14 +3,14 @@
 MultiChipMesh::MultiChipMesh() {
   // topology parameters
   read_config();
-  num_chips_ = k_chip_ * k_chip_;
+  num_chips_ = chip_w_ * chip_h_;
   num_nodes_ = k_node_ * k_node_ * num_chips_;
   num_cores_ = num_nodes_;
   for (int chip_id = 0; chip_id < num_chips_; chip_id++) {
     chips_.push_back(new ChipMesh(k_node_, param->vc_number, param->buffer_size));
     get_chip(chip_id)->set_chip(this, chip_id);
-    get_chip(chip_id)->chip_coordinate_[0] = chip_id % k_chip_;
-    get_chip(chip_id)->chip_coordinate_[1] = chip_id / k_chip_;
+    get_chip(chip_id)->chip_coordinate_[0] = chip_id % chip_w_;
+    get_chip(chip_id)->chip_coordinate_[1] = chip_id / chip_w_;
   }
   connect_chiplets();
 }
@@ -22,12 +22,31 @@ MultiChipMesh::~MultiChipMesh() {
 
 void MultiChipMesh::read_config() {
   k_node_ = param->params_ptree.get<int>("Network.k_node", 4);
-  k_chip_ = param->params_ptree.get<int>("Network.k_chip", 2);
+
+  // NEW: Support chip_w and chip_h for rectangular chiplet grids
+  // Fallback to k_chip for backward compatibility (square grids)
+  auto chip_w_opt = param->params_ptree.get_optional<int>("Network.chip_w");
+  auto chip_h_opt = param->params_ptree.get_optional<int>("Network.chip_h");
+
+  if (chip_w_opt && chip_h_opt) {
+    // Use new rectangular grid format
+    chip_w_ = chip_w_opt.get();
+    chip_h_ = chip_h_opt.get();
+    k_chip_ = chip_w_;  // For backward compatibility
+    printf("Multi Chip 2D-mesh, %ix%i chiplets (rectangular grid), each chiplet %ix%i nodes\n",
+           chip_w_, chip_h_, k_node_, k_node_);
+  } else {
+    // Fallback to square grid (k_chip)
+    k_chip_ = param->params_ptree.get<int>("Network.k_chip", 2);
+    chip_w_ = k_chip_;
+    chip_h_ = k_chip_;
+    printf("Multi Chip 2D-mesh, %ix%i chiplets (square grid), each chiplet %ix%i nodes\n",
+           k_chip_, k_chip_, k_node_, k_node_);
+  }
+
   algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "XY");
   if (algorithm_ == "NFR_adaptive") assert(param->vc_number >= 2);
   d2d_IF_ = param->params_ptree.get<std::string>("Network.d2d_IF", "off_chip_parallel");
-  printf("Multi Chip 2D-mesh, %ix%i chiplets, each chiplet %ix%i nodes\n", k_chip_, k_chip_,
-         k_node_, k_node_);
 }
 
 void MultiChipMesh::connect_chiplets() {
@@ -48,7 +67,7 @@ void MultiChipMesh::connect_chiplets() {
           std::cerr << "Unknown d2d interface: " << d2d_IF_ << std::endl;
       }
     }
-    if (chip_x != k_chip_ - 1) {
+    if (chip_x != chip_w_ - 1) {
       for (int y = 0; y < k_node_; ++y) {
         NodeMesh* node = chip->get_node(y * k_node_ + k_node_ - 1);
         node->xpos_link_node_ = NodeID(y * k_node_, chip_id + 1);
@@ -64,7 +83,7 @@ void MultiChipMesh::connect_chiplets() {
     if (chip_y != 0) {
       for (int x = 0; x < k_node_; ++x) {
         NodeMesh* node = chip->get_node(x);
-        node->yneg_link_node_ = NodeID(x + (k_node_ - 1) * k_node_, chip_id - k_chip_);
+        node->yneg_link_node_ = NodeID(x + (k_node_ - 1) * k_node_, chip_id - chip_w_);
         node->yneg_link_buffer_ = get_node(node->yneg_link_node_)->ypos_in_buffer_;
         if (d2d_IF_ == "off_chip_parallel")
           node->yneg_in_buffer_->channel_ = off_chip_parallel_channel;
@@ -74,10 +93,10 @@ void MultiChipMesh::connect_chiplets() {
           std::cerr << "Unknown d2d interface: " << d2d_IF_ << std::endl;
       }
     }
-    if (chip_y != k_chip_ - 1) {
+    if (chip_y != chip_h_ - 1) {
       for (int x = 0; x < k_node_; ++x) {
         NodeMesh* node = chip->get_node(x + (k_node_ - 1) * k_node_);
-        node->ypos_link_node_ = NodeID(x, chip_id + k_chip_);
+        node->ypos_link_node_ = NodeID(x, chip_id + chip_w_);
         node->ypos_link_buffer_ = get_node(node->ypos_link_node_)->yneg_in_buffer_;
         if (d2d_IF_ == "off_chip_parallel")
           node->ypos_in_buffer_->channel_ = off_chip_parallel_channel;
