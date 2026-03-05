@@ -24,9 +24,9 @@ events:
       The output was:
       0
       閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-      鐢熸垚鍚姩鏃堕棿涓?2026/3/3 17:13:46銆?
+      鐢熸垚鍚姩鏃堕棿涓?2026/3/5 16:37:27銆?
       
-      鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.vcxproj鈥?榛樿鐩爣)銆?
+      鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.vcxproj鈥?榛樿鐩爣)銆?
       PrepareForBuild:
         姝ｅ湪鍒涘缓鐩綍鈥淒ebug\\鈥濄€?
         宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
@@ -42,9 +42,9 @@ events:
         CMakeCCompilerId.c
       Link:
         C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdC.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib" /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdC.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdC.lib" /MACHINE:X64 Debug\\CMakeCCompilerId.obj
-        CompilerIdC.vcxproj -> D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.exe
+        CompilerIdC.vcxproj -> D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.exe
       AppLocalFromInstalled:
-        pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\Program Files\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.exe" "C:\\Program Files\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdC.tlog\\CompilerIdC.write.1u.tlog" "Debug\\vcpkg.applocal.log"
+        pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\Program Files\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.exe" "C:\\Program Files\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdC.tlog\\CompilerIdC.write.1u.tlog" "Debug\\vcpkg.applocal.log"
       PostBuildEvent:
         for %%i in (cl.exe) do @echo CMAKE_C_COMPILER=%%~$PATH:i
         :VCEnd
@@ -52,13 +52,13 @@ events:
       FinalizeBuildStatus:
         姝ｅ湪鍒犻櫎鏂囦欢鈥淒ebug\\CompilerIdC.tlog\\unsuccessfulbuild鈥濄€?
         姝ｅ湪瀵光€淒ebug\\CompilerIdC.tlog\\CompilerIdC.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
-      宸插畬鎴愮敓鎴愰」鐩€淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+      宸插畬鎴愮敓鎴愰」鐩€淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdC\\CompilerIdC.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
       
       宸叉垚鍔熺敓鎴愩€?
           0 涓鍛?
           0 涓敊璇?
       
-      宸茬敤鏃堕棿 00:00:01.22
+      宸茬敤鏃堕棿 00:00:01.07
       
       
       Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
@@ -66,7 +66,7 @@ events:
       Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.vcxproj"
       
       The C compiler identification is MSVC, found in:
-        D:/python_prj/chiplet-network-sim/build/CMakeFiles/3.29.2/CompilerIdC/CompilerIdC.exe
+        D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/3.29.2/CompilerIdC/CompilerIdC.exe
       
   -
     kind: "message-v1"
@@ -84,9 +84,9 @@ events:
       The output was:
       0
       閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-      鐢熸垚鍚姩鏃堕棿涓?2026/3/3 17:13:48銆?
+      鐢熸垚鍚姩鏃堕棿涓?2026/3/5 16:37:28銆?
       
-      鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.vcxproj鈥?榛樿鐩爣)銆?
+      鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.vcxproj鈥?榛樿鐩爣)銆?
       PrepareForBuild:
         姝ｅ湪鍒涘缓鐩綍鈥淒ebug\\鈥濄€?
         宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
@@ -102,9 +102,9 @@ events:
         CMakeCXXCompilerId.cpp
       Link:
         C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib" /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdCXX.lib" /MACHINE:X64 Debug\\CMakeCXXCompilerId.obj
-        CompilerIdCXX.vcxproj -> D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.exe
+        CompilerIdCXX.vcxproj -> D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.exe
       AppLocalFromInstalled:
-        pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\Program Files\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.exe" "C:\\Program Files\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.write.1u.tlog" "Debug\\vcpkg.applocal.log"
+        pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\Program Files\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.exe" "C:\\Program Files\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.write.1u.tlog" "Debug\\vcpkg.applocal.log"
       PostBuildEvent:
         for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
         :VCEnd
@@ -112,13 +112,13 @@ events:
       FinalizeBuildStatus:
         姝ｅ湪鍒犻櫎鏂囦欢鈥淒ebug\\CompilerIdCXX.tlog\\unsuccessfulbuild鈥濄€?
         姝ｅ湪瀵光€淒ebug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
-      宸插畬鎴愮敓鎴愰」鐩€淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+      宸插畬鎴愮敓鎴愰」鐩€淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\3.29.2\\CompilerIdCXX\\CompilerIdCXX.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
       
       宸叉垚鍔熺敓鎴愩€?
           0 涓鍛?
           0 涓敊璇?
       
-      宸茬敤鏃堕棿 00:00:00.81
+      宸茬敤鏃堕棿 00:00:00.87
       
       
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -126,7 +126,7 @@ events:
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
       
       The CXX compiler identification is MSVC, found in:
-        D:/python_prj/chiplet-network-sim/build/CMakeFiles/3.29.2/CompilerIdCXX/CompilerIdCXX.exe
+        D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/3.29.2/CompilerIdCXX/CompilerIdCXX.exe
       
   -
     kind: "try_compile-v1"
@@ -137,8 +137,8 @@ events:
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-fratxm"
-      binary: "D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-fratxm"
+      source: "D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-a6ia0a"
+      binary: "D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-a6ia0a"
     cmakeVariables:
       CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
       CMAKE_C_FLAGS_DEBUG: "/MDd /Zi /Ob0 /Od /RTC1"
@@ -147,45 +147,45 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-fratxm'
+        Change Dir: 'D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-a6ia0a'
         
-        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_49fb4.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_a1488.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
         閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-        鐢熸垚鍚姩鏃堕棿涓?2026/3/3 17:13:49銆?
+        鐢熸垚鍚姩鏃堕棿涓?2026/3/5 16:37:29銆?
         
-        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fratxm\\cmTC_49fb4.vcxproj鈥?榛樿鐩爣)銆?
+        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-a6ia0a\\cmTC_a1488.vcxproj鈥?榛樿鐩爣)銆?
         PrepareForBuild:
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_49fb4.dir\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_a1488.dir\\Debug\\鈥濄€?
           宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
-          姝ｅ湪鍒涘缓鐩綍鈥淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fratxm\\Debug\\鈥濄€?
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_49fb4.dir\\Debug\\cmTC_49fb4.tlog\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-a6ia0a\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_a1488.dir\\Debug\\cmTC_a1488.tlog\\鈥濄€?
         InitializeBuildStatus:
-          姝ｅ湪鍒涘缓鈥渃mTC_49fb4.dir\\Debug\\cmTC_49fb4.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
-          姝ｅ湪瀵光€渃mTC_49fb4.dir\\Debug\\cmTC_49fb4.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+          姝ｅ湪鍒涘缓鈥渃mTC_a1488.dir\\Debug\\cmTC_a1488.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_a1488.dir\\Debug\\cmTC_a1488.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
         VcpkgTripletSelection:
           Using triplet "x64-windows" from "C:\\Program Files\\vcpkg\\installed\\x64-windows\\"
           Using normalized configuration "Release"
         ClCompile:
-          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\Program Files\\vcpkg\\installed\\x64-windows\\include" /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_49fb4.dir\\Debug\\\\" /Fd"cmTC_49fb4.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\\Strawberry\\c\\share\\cmake-3.29\\Modules\\CMakeCCompilerABI.c"
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\Program Files\\vcpkg\\installed\\x64-windows\\include" /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_a1488.dir\\Debug\\\\" /Fd"cmTC_a1488.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\\Strawberry\\c\\share\\cmake-3.29\\Modules\\CMakeCCompilerABI.c"
           鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.44.35219 鐗?
           鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
-          cl /c /I"C:\\Program Files\\vcpkg\\installed\\x64-windows\\include" /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_49fb4.dir\\Debug\\\\" /Fd"cmTC_49fb4.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\\Strawberry\\c\\share\\cmake-3.29\\Modules\\CMakeCCompilerABI.c"
+          cl /c /I"C:\\Program Files\\vcpkg\\installed\\x64-windows\\include" /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_a1488.dir\\Debug\\\\" /Fd"cmTC_a1488.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\\Strawberry\\c\\share\\cmake-3.29\\Modules\\CMakeCCompilerABI.c"
           CMakeCCompilerABI.c
         Link:
-          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fratxm\\Debug\\cmTC_49fb4.exe" /INCREMENTAL /ILK:"cmTC_49fb4.dir\\Debug\\cmTC_49fb4.ilk" /NOLOGO /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib" /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-fratxm/Debug/cmTC_49fb4.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-fratxm/Debug/cmTC_49fb4.lib" /MACHINE:X64  /machine:x64 cmTC_49fb4.dir\\Debug\\CMakeCCompilerABI.obj
-          cmTC_49fb4.vcxproj -> D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fratxm\\Debug\\cmTC_49fb4.exe
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-a6ia0a\\Debug\\cmTC_a1488.exe" /INCREMENTAL /ILK:"cmTC_a1488.dir\\Debug\\cmTC_a1488.ilk" /NOLOGO /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib" /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-a6ia0a/Debug/cmTC_a1488.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-a6ia0a/Debug/cmTC_a1488.lib" /MACHINE:X64  /machine:x64 cmTC_a1488.dir\\Debug\\CMakeCCompilerABI.obj
+          cmTC_a1488.vcxproj -> D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-a6ia0a\\Debug\\cmTC_a1488.exe
         AppLocalFromInstalled:
-          pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\Program Files\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fratxm\\Debug\\cmTC_49fb4.exe" "C:\\Program Files\\vcpkg\\installed\\x64-windows\\bin" "cmTC_49fb4.dir\\Debug\\cmTC_49fb4.tlog\\cmTC_49fb4.write.1u.tlog" "cmTC_49fb4.dir\\Debug\\vcpkg.applocal.log"
+          pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\Program Files\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-a6ia0a\\Debug\\cmTC_a1488.exe" "C:\\Program Files\\vcpkg\\installed\\x64-windows\\bin" "cmTC_a1488.dir\\Debug\\cmTC_a1488.tlog\\cmTC_a1488.write.1u.tlog" "cmTC_a1488.dir\\Debug\\vcpkg.applocal.log"
         FinalizeBuildStatus:
-          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_49fb4.dir\\Debug\\cmTC_49fb4.tlog\\unsuccessfulbuild鈥濄€?
-          姝ｅ湪瀵光€渃mTC_49fb4.dir\\Debug\\cmTC_49fb4.tlog\\cmTC_49fb4.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
-        宸插畬鎴愮敓鎴愰」鐩€淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-fratxm\\cmTC_49fb4.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_a1488.dir\\Debug\\cmTC_a1488.tlog\\unsuccessfulbuild鈥濄€?
+          姝ｅ湪瀵光€渃mTC_a1488.dir\\Debug\\cmTC_a1488.tlog\\cmTC_a1488.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
+        宸插畬鎴愮敓鎴愰」鐩€淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-a6ia0a\\cmTC_a1488.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
         
         宸叉垚鍔熺敓鎴愩€?
             0 涓鍛?
             0 涓敊璇?
         
-        宸茬敤鏃堕棿 00:00:00.80
+        宸茬敤鏃堕棿 00:00:00.79
         
       exitCode: 0
   -
@@ -225,8 +225,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-tjjjq1"
-      binary: "D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-tjjjq1"
+      source: "D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-htgzsk"
+      binary: "D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-htgzsk"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/MDd /Zi /Ob0 /Od /RTC1"
@@ -235,45 +235,45 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-tjjjq1'
+        Change Dir: 'D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-htgzsk'
         
-        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_0bdea.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        Run Build Command(s): "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_e1c33.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
         閫傜敤浜?.NET Framework MSBuild 鐗堟湰 17.14.23+b0019275e
-        鐢熸垚鍚姩鏃堕棿涓?2026/3/3 17:13:50銆?
+        鐢熸垚鍚姩鏃堕棿涓?2026/3/5 16:37:30銆?
         
-        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tjjjq1\\cmTC_0bdea.vcxproj鈥?榛樿鐩爣)銆?
+        鑺傜偣 1 涓婄殑椤圭洰鈥淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-htgzsk\\cmTC_e1c33.vcxproj鈥?榛樿鐩爣)銆?
         PrepareForBuild:
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_0bdea.dir\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_e1c33.dir\\Debug\\鈥濄€?
           宸插惎鐢ㄧ粨鏋勫寲杈撳嚭銆傜紪璇戝櫒璇婃柇鐨勬牸寮忚缃皢鍙嶆槧閿欒灞傛缁撴瀯銆傛湁鍏宠缁嗕俊鎭紝璇峰弬闃?https://aka.ms/cpp/structured-output銆?
-          姝ｅ湪鍒涘缓鐩綍鈥淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tjjjq1\\Debug\\鈥濄€?
-          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_0bdea.dir\\Debug\\cmTC_0bdea.tlog\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-htgzsk\\Debug\\鈥濄€?
+          姝ｅ湪鍒涘缓鐩綍鈥渃mTC_e1c33.dir\\Debug\\cmTC_e1c33.tlog\\鈥濄€?
         InitializeBuildStatus:
-          姝ｅ湪鍒涘缓鈥渃mTC_0bdea.dir\\Debug\\cmTC_0bdea.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
-          姝ｅ湪瀵光€渃mTC_0bdea.dir\\Debug\\cmTC_0bdea.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
+          姝ｅ湪鍒涘缓鈥渃mTC_e1c33.dir\\Debug\\cmTC_e1c33.tlog\\unsuccessfulbuild鈥濓紝鍥犱负宸叉寚瀹氣€淎lwaysCreate鈥濄€?
+          姝ｅ湪瀵光€渃mTC_e1c33.dir\\Debug\\cmTC_e1c33.tlog\\unsuccessfulbuild鈥濇墽琛?Touch 浠诲姟銆?
         VcpkgTripletSelection:
           Using triplet "x64-windows" from "C:\\Program Files\\vcpkg\\installed\\x64-windows\\"
           Using normalized configuration "Release"
         ClCompile:
-          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\Program Files\\vcpkg\\installed\\x64-windows\\include" /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_0bdea.dir\\Debug\\\\" /Fd"cmTC_0bdea.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\\Strawberry\\c\\share\\cmake-3.29\\Modules\\CMakeCXXCompilerABI.cpp"
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /I"C:\\Program Files\\vcpkg\\installed\\x64-windows\\include" /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_e1c33.dir\\Debug\\\\" /Fd"cmTC_e1c33.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\\Strawberry\\c\\share\\cmake-3.29\\Modules\\CMakeCXXCompilerABI.cpp"
           鐢ㄤ簬 x64 鐨?Microsoft (R) C/C++ 浼樺寲缂栬瘧鍣?19.44.35219 鐗?
           鐗堟潈鎵€鏈?C) Microsoft Corporation銆備繚鐣欐墍鏈夋潈鍒┿€?
-          cl /c /I"C:\\Program Files\\vcpkg\\installed\\x64-windows\\include" /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_0bdea.dir\\Debug\\\\" /Fd"cmTC_0bdea.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\\Strawberry\\c\\share\\cmake-3.29\\Modules\\CMakeCXXCompilerABI.cpp"
+          cl /c /I"C:\\Program Files\\vcpkg\\installed\\x64-windows\\include" /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_e1c33.dir\\Debug\\\\" /Fd"cmTC_e1c33.dir\\Debug\\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\\Strawberry\\c\\share\\cmake-3.29\\Modules\\CMakeCXXCompilerABI.cpp"
           CMakeCXXCompilerABI.cpp
         Link:
-          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tjjjq1\\Debug\\cmTC_0bdea.exe" /INCREMENTAL /ILK:"cmTC_0bdea.dir\\Debug\\cmTC_0bdea.ilk" /NOLOGO /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib" /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-tjjjq1/Debug/cmTC_0bdea.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:/python_prj/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-tjjjq1/Debug/cmTC_0bdea.lib" /MACHINE:X64  /machine:x64 cmTC_0bdea.dir\\Debug\\CMakeCXXCompilerABI.obj
-          cmTC_0bdea.vcxproj -> D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tjjjq1\\Debug\\cmTC_0bdea.exe
+          C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-htgzsk\\Debug\\cmTC_e1c33.exe" /INCREMENTAL /ILK:"cmTC_e1c33.dir\\Debug\\cmTC_e1c33.ilk" /NOLOGO /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib" /LIBPATH:"C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "C:\\Program Files\\vcpkg\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-htgzsk/Debug/cmTC_e1c33.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/CMakeScratch/TryCompile-htgzsk/Debug/cmTC_e1c33.lib" /MACHINE:X64  /machine:x64 cmTC_e1c33.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_e1c33.vcxproj -> D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-htgzsk\\Debug\\cmTC_e1c33.exe
         AppLocalFromInstalled:
-          pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\Program Files\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tjjjq1\\Debug\\cmTC_0bdea.exe" "C:\\Program Files\\vcpkg\\installed\\x64-windows\\bin" "cmTC_0bdea.dir\\Debug\\cmTC_0bdea.tlog\\cmTC_0bdea.write.1u.tlog" "cmTC_0bdea.dir\\Debug\\vcpkg.applocal.log"
+          pwsh.exe -ExecutionPolicy Bypass -noprofile -File "C:\\Program Files\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-htgzsk\\Debug\\cmTC_e1c33.exe" "C:\\Program Files\\vcpkg\\installed\\x64-windows\\bin" "cmTC_e1c33.dir\\Debug\\cmTC_e1c33.tlog\\cmTC_e1c33.write.1u.tlog" "cmTC_e1c33.dir\\Debug\\vcpkg.applocal.log"
         FinalizeBuildStatus:
-          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_0bdea.dir\\Debug\\cmTC_0bdea.tlog\\unsuccessfulbuild鈥濄€?
-          姝ｅ湪瀵光€渃mTC_0bdea.dir\\Debug\\cmTC_0bdea.tlog\\cmTC_0bdea.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
-        宸插畬鎴愮敓鎴愰」鐩€淒:\\python_prj\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-tjjjq1\\cmTC_0bdea.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
+          姝ｅ湪鍒犻櫎鏂囦欢鈥渃mTC_e1c33.dir\\Debug\\cmTC_e1c33.tlog\\unsuccessfulbuild鈥濄€?
+          姝ｅ湪瀵光€渃mTC_e1c33.dir\\Debug\\cmTC_e1c33.tlog\\cmTC_e1c33.lastbuildstate鈥濇墽琛?Touch 浠诲姟銆?
+        宸插畬鎴愮敓鎴愰」鐩€淒:\\python_prj\\neurosim_test\\neurosim_win_dse\\chip\\chiplet-network-sim\\build\\CMakeFiles\\CMakeScratch\\TryCompile-htgzsk\\cmTC_e1c33.vcxproj鈥?榛樿鐩爣)鐨勬搷浣溿€?
         
         宸叉垚鍔熺敓鎴愩€?
             0 涓鍛?
             0 涓敊璇?
         
-        宸茬敤鏃堕棿 00:00:00.78
+        宸茬敤鏃堕棿 00:00:00.76
         
       exitCode: 0
   -

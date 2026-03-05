@@ -1,58 +1,58 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\buffer.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\chip.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\chip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\config.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\main.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\node.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\packet.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\packet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\system.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\system.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\traffic_manager.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\traffic_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\netrace\netrace.c">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\netrace\netrace.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\topologies\chip_mesh.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\topologies\chip_mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\topologies\dragonfly_chiplet.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\topologies\dragonfly_chiplet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\topologies\dragonfly_sw.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\topologies\dragonfly_sw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\topologies\multiple_chip_mesh.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\topologies\multiple_chip_mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\topologies\multiple_chip_torus.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\topologies\multiple_chip_torus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\python_prj\chiplet-network-sim\src\topologies\single_chip_mesh.cpp">
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\topologies\single_chip_mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\python_prj\chiplet-network-sim\CMakeLists.txt" />
+    <CustomBuild Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{3C6F3163-4B98-321B-92E8-4A01C4D32D43}</UniqueIdentifier>
+      <UniqueIdentifier>{44776853-AA7F-35BD-A9BC-E473CDE6DAC8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -55,19 +55,20 @@ class NetraceHeader:
 
     def to_bytes(self) -> bytes:
         """转换为二进制格式"""
-        # 使用pragma pack(1)对齐
+        # 使用pragma pack(1)对齐，匹配C结构体：magic, version, benchmark_name, num_nodes, pad, ...
+        # IMPORTANT: Keep same order as C struct - benchmark_name BEFORE num_nodes
         header_pack = struct.pack(
-            '<IfB30sBQQII8s',  # < = little endian
-            self.nt_magic,           # unsigned int
-            self.version,            # float
-            self.num_nodes,          # unsigned char
-            self.benchmark_name.encode('ascii'),  # char[30]
-            0,                       # padding
-            self.num_cycles,         # unsigned long long
-            self.num_packets,        # unsigned long long
-            self.notes_length,       # unsigned int
-            self.num_regions,        # unsigned int
-            b'\x00' * 8              # padding
+            '<If30sHBQQII8s',  # < = little endian, H=unsigned short (0-65535)
+            self.nt_magic,           # unsigned int (4 bytes)
+            self.version,            # float (4 bytes)
+            self.benchmark_name.encode('ascii'),  # char[30] (30 bytes)
+            self.num_nodes,          # unsigned short (2 bytes, changed from char to support >255 nodes)
+            0,                       # unsigned char pad (1 byte)
+            self.num_cycles,         # unsigned long long (8 bytes)
+            self.num_packets,        # unsigned long long (8 bytes)
+            self.notes_length,       # unsigned int (4 bytes)
+            self.num_regions,        # unsigned int (4 bytes)
+            b'\x00' * 8              # padding (8 bytes)
         )
 
         result = header_pack

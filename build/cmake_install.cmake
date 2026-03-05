@@ -1,4 +1,4 @@
-# Install script for directory: D:/python_prj/chiplet-network-sim
+# Install script for directory: D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "D:/python_prj/chiplet-network-sim/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

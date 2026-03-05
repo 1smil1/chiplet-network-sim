@@ -105,8 +105,8 @@ C:/Strawberry/c/share/cmake-3.29/Modules/Platform/Windows-MSVC-CXX.cmake
 C:/Strawberry/c/share/cmake-3.29/Modules/Platform/Windows-MSVC.cmake
 C:/Strawberry/c/share/cmake-3.29/Modules/Platform/Windows.cmake
 C:/Strawberry/c/share/cmake-3.29/Modules/Platform/WindowsPaths.cmake
-D:/python_prj/chiplet-network-sim/CMakeLists.txt
-D:/python_prj/chiplet-network-sim/build/CMakeFiles/3.29.2/CMakeCCompiler.cmake
-D:/python_prj/chiplet-network-sim/build/CMakeFiles/3.29.2/CMakeCXXCompiler.cmake
-D:/python_prj/chiplet-network-sim/build/CMakeFiles/3.29.2/CMakeRCCompiler.cmake
-D:/python_prj/chiplet-network-sim/build/CMakeFiles/3.29.2/CMakeSystem.cmake
+D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/CMakeLists.txt
+D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/3.29.2/CMakeCCompiler.cmake
+D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/3.29.2/CMakeCXXCompiler.cmake
+D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/3.29.2/CMakeRCCompiler.cmake
+D:/python_prj/neurosim_test/neurosim_win_dse/chip/chiplet-network-sim/build/CMakeFiles/3.29.2/CMakeSystem.cmake

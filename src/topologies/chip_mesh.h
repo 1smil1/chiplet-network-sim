@@ -9,6 +9,12 @@ class NodeMesh : public Node {
   NodeMesh(int k_node, int vc_num, int buffer_size);
 
   void set_node(Chip* chip, NodeID id) override;
+  void load_custom_positions(const std::string& position_file);
+
+  // Static cache for positions (read once, used by all nodes)
+  static std::map<int, std::pair<int, int>> load_all_positions(const std::string& position_file);
+  static std::map<int, std::pair<int, int>> position_cache_;
+  static std::string cached_position_file_;
 
   // Chip* chip_;  // point to the chip where the node is located
   int x_, y_;   // coodinate with the chip
@@ -45,6 +51,14 @@ class ChipMesh : public Chip {
     return static_cast<NodeMesh*>(nodes_[id.node_id]);
   }
 
+  // NEW: Spatial indexing for custom positions
+  void build_position_index();
+  int find_node_at(int x, int y);  // Returns node_id or -1 if not found
+
   int k_node_;
   std::vector<int> chip_coordinate_;
+
+ private:
+  // NEW: Spatial index: (x, y) → node_id
+  std::map<std::pair<int, int>, int> position_to_node_id_;
 };

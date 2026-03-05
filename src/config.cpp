@@ -31,6 +31,7 @@ Parameters::Parameters(const std::string &config_file) {
     netrace_file = params_ptree.get<std::string>("Files.netrace_file");
   output_file = params_ptree.get<std::string>("Files.output_file", "../../output/output.csv");
   log_file = params_ptree.get<std::string>("Files.log_file", "../../output/log.txt");
+  position_file = params_ptree.get<std::string>("Network.position_file", "");
 
   print_params();
 }

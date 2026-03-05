@@ -1,4 +1,12 @@
 #include "chip_mesh.h"
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <map>
+
+// Initialize static members
+std::map<int, std::pair<int, int>> NodeMesh::position_cache_;
+std::string NodeMesh::cached_position_file_ = "";
 
 NodeMesh::NodeMesh(int k_node, int vc_num, int buffer_size)
     : Node(4, vc_num, buffer_size),
@@ -24,6 +32,59 @@ void NodeMesh::set_node(Chip* chip, NodeID id) {
   id_ = id;
   x_ = id.node_id % k_node_;
   y_ = id.node_id / k_node_;
+
+  // Load custom positions if position_file is specified
+  if (!param->position_file.empty()) {
+    load_custom_positions(param->position_file);
+  }
+}
+
+std::map<int, std::pair<int, int>> NodeMesh::load_all_positions(const std::string& position_file) {
+  std::map<int, std::pair<int, int>> positions;
+
+  std::ifstream file(position_file);
+  if (!file.is_open()) {
+    std::cerr << "Warning: Cannot open position file: " << position_file << std::endl;
+    return positions;
+  }
+
+  std::string line;
+  int loaded_count = 0;
+  while (std::getline(file, line)) {
+    // Skip comments and empty lines
+    if (line.empty() || line[0] == '#') continue;
+
+    std::istringstream iss(line);
+    int node_id, x, y;
+    if (iss >> node_id >> x >> y) {
+      positions[node_id] = std::make_pair(x, y);
+      loaded_count++;
+    }
+  }
+  file.close();
+
+  if (loaded_count > 0) {
+    std::cout << "[NodeMesh] Loaded " << loaded_count << " custom positions from " << position_file << std::endl;
+  }
+
+  return positions;
+}
+
+void NodeMesh::load_custom_positions(const std::string& position_file) {
+  if (position_file.empty()) return;
+
+  // Load cache if needed (only once for all nodes)
+  if (cached_position_file_ != position_file) {
+    position_cache_ = load_all_positions(position_file);
+    cached_position_file_ = position_file;
+  }
+
+  // Look up this node's position in the cache
+  auto it = position_cache_.find(id_.node_id);
+  if (it != position_cache_.end()) {
+    x_ = it->second.first;
+    y_ = it->second.second;
+  }
 }
 
 ChipMesh::ChipMesh(int k_node, int vc_num, int buffer_size) {
@@ -45,25 +106,62 @@ ChipMesh::~ChipMesh() {
   nodes_.clear();
 }
 
-void ChipMesh::set_chip(System* system, int chip_id) {
-  Chip::set_chip(system, chip_id);
+void ChipMesh::build_position_index() {
+  position_to_node_id_.clear();
   for (int node_id = 0; node_id < number_nodes_; node_id++) {
     NodeMesh* node = get_node(node_id);
-    if (node->x_ != 0) {
-      node->xneg_link_node_ = NodeID(node_id - 1, chip_id);
-      node->xneg_link_buffer_ = get_node(node->xneg_link_node_)->xpos_in_buffer_;
+    std::pair<int, int> pos = std::make_pair(node->x_, node->y_);
+    position_to_node_id_[pos] = node_id;
+  }
+  std::cout << "[ChipMesh] Built position index: " << position_to_node_id_.size() << " nodes" << std::endl;
+}
+
+int ChipMesh::find_node_at(int x, int y) {
+  auto it = position_to_node_id_.find(std::make_pair(x, y));
+  if (it != position_to_node_id_.end()) {
+    return it->second;
+  }
+  return -1;  // Not found
+}
+
+void ChipMesh::set_chip(System* system, int chip_id) {
+  Chip::set_chip(system, chip_id);  // This loads custom positions via NodeMesh::set_node()
+
+  // NEW: Build spatial index after positions are loaded
+  build_position_index();
+
+  // Build links based on COORDINATE PROXIMITY, not node_id offset
+  for (int node_id = 0; node_id < number_nodes_; node_id++) {
+    NodeMesh* node = get_node(node_id);
+    int x = node->x_;
+    int y = node->y_;
+
+    // Find left neighbor (x-1, y)
+    int left_id = find_node_at(x - 1, y);
+    if (left_id >= 0) {
+      node->xneg_link_node_ = NodeID(left_id, chip_id);
+      node->xneg_link_buffer_ = get_node(left_id)->xpos_in_buffer_;
     }
-    if (node->x_ != k_node_ - 1) {
-      node->xpos_link_node_ = NodeID(node_id + 1, chip_id);
-      node->xpos_link_buffer_ = get_node(node->xpos_link_node_)->xneg_in_buffer_;
+
+    // Find right neighbor (x+1, y)
+    int right_id = find_node_at(x + 1, y);
+    if (right_id >= 0) {
+      node->xpos_link_node_ = NodeID(right_id, chip_id);
+      node->xpos_link_buffer_ = get_node(right_id)->xneg_in_buffer_;
     }
-    if (node->y_ != 0) {
-      node->yneg_link_node_ = NodeID(node_id - k_node_, chip_id);
-      node->yneg_link_buffer_ = get_node(node->yneg_link_node_)->ypos_in_buffer_;
+
+    // Find bottom neighbor (x, y-1)
+    int bottom_id = find_node_at(x, y - 1);
+    if (bottom_id >= 0) {
+      node->yneg_link_node_ = NodeID(bottom_id, chip_id);
+      node->yneg_link_buffer_ = get_node(bottom_id)->ypos_in_buffer_;
     }
-    if (node->y_ != k_node_ - 1) {
-      node->ypos_link_node_ = NodeID(node_id + k_node_, chip_id);
-      node->ypos_link_buffer_ = get_node(node->ypos_link_node_)->yneg_in_buffer_;
+
+    // Find top neighbor (x, y+1)
+    int top_id = find_node_at(x, y + 1);
+    if (top_id >= 0) {
+      node->ypos_link_node_ = NodeID(top_id, chip_id);
+      node->ypos_link_buffer_ = get_node(top_id)->yneg_in_buffer_;
     }
   }
 }

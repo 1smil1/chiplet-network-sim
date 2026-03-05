@@ -62,7 +62,7 @@ struct nt_header {
 	unsigned int nt_magic;
 	float version;
 	char benchmark_name[NT_BMARK_NAME_LENGTH];
-	unsigned char num_nodes;
+	unsigned short num_nodes;  // Changed from unsigned char to support >255 nodes
 	unsigned long long int num_cycles;
 	unsigned long long int num_packets;
 	unsigned int notes_length;  // Includes null-terminating char

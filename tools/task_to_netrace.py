@@ -193,8 +193,20 @@ class NetraceGenerator:
         raise ValueError(f"无效的节点规范: {spec}")
 
     def generate_from_tasks(self, tasks: List[dict], output_file: str,
-                           benchmark_name: str = "user_scenario"):
-        """从任务列表生成netrace"""
+                           benchmark_name: str = "user_scenario",
+                           num_nodes: int = None,
+                           num_cycles: int = None,
+                           notes: str = None):
+        """从任务列表生成netrace
+
+        Args:
+            tasks: 任务列表
+            output_file: 输出文件路径
+            benchmark_name: 基准测试名称
+            num_nodes: 节点数（可选，如果提供则使用此值而非mapper计算值）
+            num_cycles: 总周期数（可选，如果提供则使用此值而非自动计算）
+            notes: 备注信息（可选）
+        """
         packets = []
 
         for i, task in enumerate(tasks):
@@ -240,17 +252,26 @@ class NetraceGenerator:
             )
             packets.append(packet)
 
-        # 计算总周期数
-        max_cycle = max(p.cycle for p in packets) if packets else 1000
-        num_cycles = max_cycle + 1000
+        # 使用显式num_nodes或自动计算
+        if num_nodes is None:
+            num_nodes = self.mapper.num_nodes
+
+        # 使用显式num_cycles或自动计算
+        if num_cycles is None:
+            max_cycle = max(p.cycle for p in packets) if packets else 1000
+            num_cycles = max_cycle + 1000
+
+        # 使用显式notes或生成默认值
+        if notes is None:
+            notes = f"User-defined 16-node scenario with {len(packets)} tasks"
 
         # 创建header
         header = NetraceHeader(
             benchmark_name=benchmark_name[:30],
-            num_nodes=self.mapper.num_nodes,
+            num_nodes=num_nodes,
             num_cycles=num_cycles,
             num_packets=len(packets),
-            notes=f"User-defined 16-node scenario with {len(packets)} tasks"
+            notes=notes
         )
 
         # 写入文件

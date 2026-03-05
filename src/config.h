@@ -64,6 +64,7 @@ struct Parameters {
 
   // I/O Files
   std::string trace_file, netrace_file, output_file, log_file;
+  std::string position_file;  // Custom node position file (optional)
 
   void print_params() const {
     // print all memebers
@@ -85,6 +86,7 @@ struct Parameters {
     std::cout << std::setw(20) << "Netrace File: " << netrace_file << std::endl;
     std::cout << std::setw(20) << "Output File: " << output_file << std::endl;
     std::cout << std::setw(20) << "Log File: " << log_file << std::endl;
+    std::cout << std::setw(20) << "Position File: " << position_file << std::endl;
   }
 };
 

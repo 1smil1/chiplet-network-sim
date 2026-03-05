@@ -83,7 +83,7 @@ nt_header_t* nt_read_trheader( nt_context_t* ctx ) {
 		unsigned int nt_magic;
 		float version;
 		char benchmark_name[NT_BMARK_NAME_LENGTH];
-		unsigned char num_nodes;
+		unsigned short num_nodes;  // Changed from unsigned char to support >255 nodes
 		unsigned char pad;
 		unsigned long long int num_cycles;
 		unsigned long long int num_packets;
@@ -661,7 +661,7 @@ int nt_get_headersize( nt_context_t* ctx ) {
 		unsigned int nt_magic;
 		float version;
 		char benchmark_name[NT_BMARK_NAME_LENGTH];
-		unsigned char num_nodes;
+		unsigned short num_nodes;  // Changed from unsigned char to support >255 nodes
 		unsigned long long int num_cycles;
 		unsigned long long int num_packets;
 		unsigned int notes_length;  // Includes null-terminating char
@@ -729,7 +729,7 @@ void nt_dump_header( nt_header_t* header, FILE* fp ) {
 		unsigned int nt_magic;
 		float version;
 		char benchmark_name[NT_BMARK_NAME_LENGTH];
-		unsigned char num_nodes;
+		unsigned short num_nodes;  // Changed from unsigned char to support >255 nodes
 		unsigned char pad;
 		unsigned long long int num_cycles;
 		unsigned long long int num_packets;
