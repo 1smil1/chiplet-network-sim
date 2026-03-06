@@ -368,3 +368,19 @@ FodyWeavers.xsd
 *.bz2
 *.txt
 *.yaml
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+Claude Conversations/
+*.txt
+/log/default/
+*-cwd
+*.zip
+*.log
+*.bz2
