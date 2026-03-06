@@ -9,6 +9,7 @@ Parameters* param;
 TrafficManager* TM;
 System* network;
 boost::mt19937 gen;  // random number generator
+std::atomic_uint64_t current_simulation_cycle;  // NEW: track current cycle for arrival time recording
 
 // multi-threading variables
 static std::vector<std::thread> threads;
@@ -137,6 +138,7 @@ int main(int argc, char* argv[]) {
     TM->injection_rate_ = (double)TM->CTX->input_trheader->num_packets /
                           TM->CTX->input_trheader->num_cycles / network->num_cores_;
     for (uint64_t i = 0; i < TM->CTX->input_trheader->num_cycles + 1000; i++) {
+      current_simulation_cycle.store(i);  // NEW: update current cycle
       TM->genMes(all_packets, i);
       run_one_cycle(all_packets, network);
     }

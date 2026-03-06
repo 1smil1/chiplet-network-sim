@@ -59,4 +59,5 @@ class TrafficManager {
   std::atomic_uint64_t total_parallel_hops_;
   std::atomic_uint64_t total_serial_hops_;
   std::atomic_uint64_t total_other_hops_;
+  std::atomic_uint64_t last_arrival_cycle_;  // NEW: record last packet arrival time
 };

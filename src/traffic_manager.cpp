@@ -33,6 +33,7 @@ TrafficManager::TrafficManager() {
   total_parallel_hops_.store(0);
   total_serial_hops_.store(0);
   total_other_hops_.store(0);
+  last_arrival_cycle_.store(0);
 #ifdef DEBUG
   for (auto& chip : network->chips_) {
     for (auto& node : chip->nodes_) {
@@ -83,7 +84,8 @@ void TrafficManager::print_statistics() {
             << "Internal Hops: " << average_internal_hops
             << "   Parallel Hops: " << average_parallel_hops
             << "   Serial Hops: " << average_serial_hops << "   Other Hops: " << average_other_hops
-            << std::endl;
+            << std::endl
+            << "** Task completion time: " << TM->last_arrival_cycle_.load() << " cycles (last packet arrival)" << std::endl;
   output_ << injection_rate_ << "," << ((double)total_cycles_ / message_arrived_) << ","
           << receiving_rate() << std::endl;
 #ifdef DEBUG

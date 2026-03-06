@@ -7,6 +7,9 @@
 #include "single_chip_mesh.h"
 #include "traffic_manager.h"
 
+// External variable to track current simulation cycle
+extern std::atomic_uint64_t current_simulation_cycle;
+
 System::System() {
   num_chips_ = 0;
   num_nodes_ = 0;
@@ -218,6 +221,10 @@ void System::update(Packet& p) {
     TM->total_serial_hops_ += p.serial_hops_;
     TM->total_internal_hops_ += p.internal_hops_;
     TM->total_other_hops_ += p.other_hops_;
+    // NEW: Update last arrival cycle (thread-safe compare-and-swap)
+    uint64_t current_cycle = current_simulation_cycle.load();
+    uint64_t prev_last = TM->last_arrival_cycle_.load();
+    while (prev_last < current_cycle && !TM->last_arrival_cycle_.compare_exchange_weak(prev_last, current_cycle));
     return;
   }
 }
