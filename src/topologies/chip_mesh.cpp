@@ -79,8 +79,21 @@ void NodeMesh::load_custom_positions(const std::string& position_file) {
     cached_position_file_ = position_file;
   }
 
-  // Look up this node's position in the cache
-  auto it = position_cache_.find(id_.node_id);
+  // Calculate global node ID for MultiChipMesh
+  // For SingleChipMesh: chip_id = -1, so use node_id directly
+  // For MultiChipMesh: global_id = chip_id * nodes_per_chip + node_id
+  int global_id;
+  if (id_.chip_id >= 0) {
+    // MultiChipMesh: calculate global ID
+    int nodes_per_chip = k_node_ * k_node_;
+    global_id = id_.chip_id * nodes_per_chip + id_.node_id;
+  } else {
+    // SingleChipMesh: use node_id directly
+    global_id = id_.node_id;
+  }
+
+  // Look up this node's position in the cache using global ID
+  auto it = position_cache_.find(global_id);
   if (it != position_cache_.end()) {
     x_ = it->second.first;
     y_ = it->second.second;
