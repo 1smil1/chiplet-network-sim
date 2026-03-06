@@ -328,7 +328,108 @@ Offset 24+ : (num_deps × 4 bytes) dependency IDs
 - [x] Test Method 1 (c_node_id based)
 - [ ] Test Method 2 (py_node_id based with position file)
 - [ ] Compare latency results between Method 1 and Method 2
-- [ ] Verify position file mapping matches C++ auto-assigned positions
+- [x] Verify position file mapping matches C++ auto-assigned positions
+
+---
+
+## Method 1 vs Method 2 Overview ⭐
+
+### 核心映射文件格式
+
+**文件**: `trace_node_position_mapping.txt`
+
+**重要**: 这是**唯一的映射文件**，用于所有场景！
+
+**格式**:
+```
+# py_node_id  x  y  py_chip  noc_chip  type  c_node_id
+0             14 7  0        9         real  182
+1             15 5  0        9         real  135
+517           0  0  33       33        virtual  0
+```
+
+**列说明**:
+- `py_node_id`: Python的tile_id（文件按此列升序排序）
+- `x, y`: 全局grid坐标
+- `py_chip`: Python的tier_id
+- `noc_chip`: NOC chip_id（按tier中心坐标排序后的编号）
+- `type`: `real`（真实tile）或 `virtual`（虚拟节点）
+- `c_node_id`: **最后一列**，grid坐标计算：`c_node_id = y * K_x + x`（K_x=24）
+
+### 方法1：c_node_id Based（不需要position文件）
+
+**工作流程**:
+1. Python生成`.bz2`文件，使用**c_node_id**作为src/dst
+   - 例如：`src=182, dst=135`（而不是tile_id）
+2. C++**不加载**position文件
+3. C++用`id2nodeid()`**自动计算**位置：
+   ```cpp
+   c_node_182 → x=182%24=14, y=182/24=7 → chip_id=?, node_id=? → global_pos=(14,7)
+   ```
+
+**调试模式的作用**:
+- Python生成`trace_node_position_mapping.txt`，记录Python认为的c_node_id→(x,y)映射
+- C++在调试模式**加载**这个txt文件（但**不使用**它来路由）
+- C++同时用`id2nodeid()`自动计算位置
+- **验证对比**：加载的位置 vs 自动计算的位置 → 应该完全一致！
+- 如果一致 → Python的noc_chip排序和C++的grid顺序匹配 ✓
+- 如果不一致 → 需要调整Python的排序逻辑 ✗
+
+**配置**:
+- 生产模式：`config.ini`不包含`position_file`参数
+- 调试模式：`config.ini`包含`position_file = input\test_method1\trace_node_position_mapping.txt`
+
+### 方法2：py_node_id Based（需要position文件）
+
+**工作流程**:
+1. Python生成`.bz2`文件，使用**py_node_id（tile_id）**作为src/dst
+   - 例如：`src=0, dst=1`（直接用tile_id）
+2. C++**必须加载**position文件：`trace_node_position_mapping.txt`
+3. C++建立映射表：`py_node_id → (x, y)`
+4. C++用这个映射表来查找节点位置进行路由
+
+**配置**:
+- 必须在`config.ini`中指定：`position_file = input\test_method2\trace_node_position_mapping.txt`
+
+### 映射文件的使用场景
+
+**同一个txt文件用于**:
+1. **方法1调试模式** - C++加载来验证自动分配是否正确
+2. **方法2生产模式** - C++加载来建立py_node_id→position映射
+3. **Python验证脚本** - 读取c_node_id和(x,y)的对应关系
+4. **.bz2文件生成** - Python读取来决定packet的src/dst字段
+
+**关键区别**:
+- **方法1**: .bz2用c_node_id，C++不依赖txt（调试时加载但不使用）
+- **方法2**: .bz2用py_node_id，C++必须依赖txt来查找位置
+
+---
+
+## Common Mistakes and Fixes
+
+### Issue #1: Distinguishing Real vs Virtual Nodes (WRONG)
+
+**Date**: 2026-03-06
+
+**Mistake**: In verification scripts, filtering nodes by `type == 'real'`:
+```python
+# WRONG - DO NOT DO THIS
+if node_type == 'real':
+    c_node_to_pos[c_node_id] = (x, y, py_node_id)
+```
+
+**Why It's Wrong**:
+- Both real tiles AND virtual nodes are **nodes** in the NOC simulator
+- C++ treats them identically when routing packets
+- Filtering out virtual nodes leads to incomplete verification
+
+**Correct Approach**:
+```python
+# CORRECT - Process all nodes
+c_node_to_pos[c_node_id] = (x, y, py_node_id)
+```
+
+**Location**: Affects all verification and analysis scripts that read `trace_node_position_mapping.txt`
 
 ---
 

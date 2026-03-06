@@ -1,6 +1,7 @@
 #pragma once
 #include "chip_mesh.h"
 #include "system.h"
+#include <set>
 
 class MultiChipMesh : public System {
  public:
@@ -18,9 +19,11 @@ class MultiChipMesh : public System {
     int chip_id = x / k_node_ + (y / k_node_) * chip_w_;
 
     // VERIFICATION DEBUG OUTPUT
-    if (id < 20) {  // Only print first 20 nodes
+    static std::set<int> printed_ids;
+    if (printed_ids.size() < 100 && printed_ids.find(id) == printed_ids.end()) {
       fprintf(stderr, "[VERIFY] id2nodeid: c_node_id=%d → global_pos=(%d,%d) → chip_id=%d, node_id=%d\n",
               id, x, y, chip_id, node_id);
+      printed_ids.insert(id);
     }
 
     return NodeID(node_id, chip_id);
