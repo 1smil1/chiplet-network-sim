@@ -47,6 +47,14 @@ void MultiChipMesh::read_config() {
   algorithm_ = param->params_ptree.get<std::string>("Network.routing_algorithm", "XY");
   if (algorithm_ == "NFR_adaptive") assert(param->vc_number >= 2);
   d2d_IF_ = param->params_ptree.get<std::string>("Network.d2d_IF", "off_chip_parallel");
+
+  // Load position cache for Method 2 (py_node_id based)
+  if (!param->position_file.empty()) {
+    NodeMesh::position_cache_ = NodeMesh::load_all_positions(param->position_file);
+    NodeMesh::cached_position_file_ = param->position_file;
+    fprintf(stderr, "[MultiChipMesh] Loaded position cache for Method 2: %zu entries\n",
+            NodeMesh::position_cache_.size());
+  }
 }
 
 void MultiChipMesh::connect_chiplets() {

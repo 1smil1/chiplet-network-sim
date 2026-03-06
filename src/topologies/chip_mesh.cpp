@@ -49,9 +49,10 @@ void NodeMesh::set_node(Chip* chip, NodeID id) {
   }
 
   // Load custom positions if position_file is specified
-  if (!param->position_file.empty()) {
-    load_custom_positions(param->position_file);
-  }
+  // NOTE: Temporarily disabled for Method 2 testing - may cause conflicts
+  // if (!param->position_file.empty()) {
+  //   load_custom_positions(param->position_file);
+  // }
 }
 
 std::map<int, std::pair<int, int>> NodeMesh::load_all_positions(const std::string& position_file) {
@@ -70,16 +71,27 @@ std::map<int, std::pair<int, int>> NodeMesh::load_all_positions(const std::strin
     if (line.empty() || line[0] == '#') continue;
 
     std::istringstream iss(line);
-    int node_id, x, y;
-    if (iss >> node_id >> x >> y) {
-      positions[node_id] = std::make_pair(x, y);
+    int py_node_id, x, y, py_chip, noc_chip;
+    std::string type_str;
+    int c_node_id;
+
+    // Parse format: py_node_id x y py_chip noc_chip type c_node_id
+    if (iss >> py_node_id >> x >> y >> py_chip >> noc_chip >> type_str >> c_node_id) {
+      // Store py_node_id → (x, y) mapping (for id2nodeid() in Method 2)
+      positions[py_node_id] = std::make_pair(x, y);
       loaded_count++;
+
+      // Debug output for first 10 nodes
+      if (loaded_count <= 10) {
+        fprintf(stderr, "[METHOD2] Loaded: py_node_id=%d → pos=(%d,%d), noc_chip=%d, c_node_id=%d, type=%s\n",
+                py_node_id, x, y, noc_chip, c_node_id, type_str.c_str());
+      }
     }
   }
   file.close();
 
   if (loaded_count > 0) {
-    std::cout << "[NodeMesh] Loaded " << loaded_count << " custom positions from " << position_file << std::endl;
+    fprintf(stderr, "[METHOD2] Loaded %d positions from %s\n", loaded_count, position_file.c_str());
   }
 
   return positions;
