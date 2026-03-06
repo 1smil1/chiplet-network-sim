@@ -82,8 +82,8 @@ struct nt_packet {
 	unsigned int id;
 	unsigned int addr;
 	unsigned char type;
-	unsigned char src;
-	unsigned char dst;
+	unsigned short src;  // Changed from unsigned char to support >255 nodes
+	unsigned short dst;  // Changed from unsigned char to support >255 nodes
 	unsigned char node_types;
 	unsigned char num_deps;
 	nt_dependency_t* deps;

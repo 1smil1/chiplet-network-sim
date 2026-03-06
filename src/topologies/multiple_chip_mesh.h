@@ -16,6 +16,13 @@ class MultiChipMesh : public System {
     int y = id / K_x;
     int node_id = x % k_node_ + (y % k_node_) * k_node_;
     int chip_id = x / k_node_ + (y / k_node_) * chip_w_;
+
+    // VERIFICATION DEBUG OUTPUT
+    if (id < 20) {  // Only print first 20 nodes
+      fprintf(stderr, "[VERIFY] id2nodeid: c_node_id=%d → global_pos=(%d,%d) → chip_id=%d, node_id=%d\n",
+              id, x, y, chip_id, node_id);
+    }
+
     return NodeID(node_id, chip_id);
   }
   inline NodeMesh* get_node(NodeID id) const override {

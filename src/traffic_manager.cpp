@@ -367,6 +367,18 @@ void TrafficManager::netrace(std::vector<Packet*>& vecmess, uint64_t cyc) {
       //     new Packet(NodeID(src % core_per_chip, src / core_per_chip),
       //                NodeID(dest % core_per_chip, dest / core_per_chip), packet_length);
       Packet* packet = new Packet(network->id2nodeid(src), network->id2nodeid(dest), packet_length);
+
+      // VERIFICATION DEBUG OUTPUT (first 10 packets only)
+      uint64_t msg_count = all_message_num_.load();
+      if (msg_count < 10) {
+        NodeID src_id = network->id2nodeid(src);
+        NodeID dst_id = network->id2nodeid(dest);
+        fprintf(stderr, "[VERIFY] Packet %llu: src_c_node=%d → chip%d_node%d, "
+                "dst_c_node=%d → chip%d_node%d\n",
+                msg_count, src, src_id.chip_id, src_id.node_id,
+                dest, dst_id.chip_id, dst_id.node_id);
+      }
+
       vecmess.push_back(packet);
       all_message_num_++;
     }

@@ -213,8 +213,9 @@ nt_packet_t* nt_read_packet( nt_context_t* ctx ) {
 		unsigned int id;
 		unsigned int addr;
 		unsigned char type;
-		unsigned char src;
-		unsigned char dst;
+		unsigned char pad1;  // Explicit padding to align src (needed even with pack(1))
+		unsigned short src;  // Changed from unsigned char to support >255 nodes
+		unsigned short dst;  // Changed from unsigned char to support >255 nodes
 		unsigned char node_types;
 		unsigned char num_deps;
 	};
@@ -766,8 +767,9 @@ void nt_dump_packet( nt_packet_t* packet, FILE* fp ) {
 		unsigned int id;
 		unsigned int addr;
 		unsigned char type;
-		unsigned char src;
-		unsigned char dst;
+		unsigned char pad1;  // Explicit padding to align src (needed even with pack(1))
+		unsigned short src;  // Changed from unsigned char to support >255 nodes
+		unsigned short dst;  // Changed from unsigned char to support >255 nodes
 		unsigned char node_types;
 		unsigned char num_deps;
 	};

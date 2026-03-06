@@ -33,6 +33,21 @@ void NodeMesh::set_node(Chip* chip, NodeID id) {
   x_ = id.node_id % k_node_;
   y_ = id.node_id / k_node_;
 
+  // VERIFICATION DEBUG OUTPUT
+  ChipMesh* chip_mesh = dynamic_cast<ChipMesh*>(chip_);
+  if (chip_mesh && id.chip_id < 5) {  // First 5 chips only
+    int chip_x = chip_mesh->chip_coordinate_[0];
+    int chip_y = chip_mesh->chip_coordinate_[1];
+    int global_x = chip_x * k_node_ + x_;
+    int global_y = chip_y * k_node_ + y_;
+
+    if (id.node_id < 4) {  // First 4 nodes per chip
+      fprintf(stderr, "[VERIFY] NodeMesh::set_node - chip_id=%d, node_id=%d, "
+              "local_pos=(%d,%d), chip_pos=(%d,%d), global_pos=(%d,%d)\n",
+              id.chip_id, id.node_id, x_, y_, chip_x, chip_y, global_x, global_y);
+    }
+  }
+
   // Load custom positions if position_file is specified
   if (!param->position_file.empty()) {
     load_custom_positions(param->position_file);
