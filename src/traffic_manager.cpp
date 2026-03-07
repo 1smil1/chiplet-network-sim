@@ -34,6 +34,13 @@ TrafficManager::TrafficManager() {
   total_serial_hops_.store(0);
   total_other_hops_.store(0);
   last_arrival_cycle_.store(0);
+
+  // Initialize slowest packet tracking
+  slowest_packet_latency_.store(0);
+  slowest_packet_src_.store(-1);
+  slowest_packet_dst_.store(-1);
+  slowest_packet_length_.store(0);
+  slowest_packet_hops_.store(0);
 #ifdef DEBUG
   for (auto& chip : network->chips_) {
     for (auto& node : chip->nodes_) {
@@ -85,7 +92,12 @@ void TrafficManager::print_statistics() {
             << "   Parallel Hops: " << average_parallel_hops
             << "   Serial Hops: " << average_serial_hops << "   Other Hops: " << average_other_hops
             << std::endl
-            << "** Task completion time: " << TM->last_arrival_cycle_.load() << " cycles (last packet arrival)" << std::endl;
+            << "** Task completion time: " << TM->last_arrival_cycle_.load() << " cycles (last packet arrival)" << std::endl
+            << "** Slowest packet: latency=" << TM->slowest_packet_latency_.load() << " cycles"
+            << ", src=" << TM->slowest_packet_src_.load()
+            << ", dst=" << TM->slowest_packet_dst_.load()
+            << ", length=" << TM->slowest_packet_length_.load() << " flits"
+            << ", hops=" << TM->slowest_packet_hops_.load() << std::endl;
   output_ << injection_rate_ << "," << ((double)total_cycles_ / message_arrived_) << ","
           << receiving_rate() << std::endl;
 #ifdef DEBUG

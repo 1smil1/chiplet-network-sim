@@ -60,4 +60,11 @@ class TrafficManager {
   std::atomic_uint64_t total_serial_hops_;
   std::atomic_uint64_t total_other_hops_;
   std::atomic_uint64_t last_arrival_cycle_;  // NEW: record last packet arrival time
+
+  // NEW: Track slowest packet information
+  std::atomic_uint64_t slowest_packet_latency_;
+  std::atomic_int slowest_packet_src_;
+  std::atomic_int slowest_packet_dst_;
+  std::atomic_int slowest_packet_length_;
+  std::atomic_int slowest_packet_hops_;
 };

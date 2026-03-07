@@ -221,10 +221,25 @@ void System::update(Packet& p) {
     TM->total_serial_hops_ += p.serial_hops_;
     TM->total_internal_hops_ += p.internal_hops_;
     TM->total_other_hops_ += p.other_hops_;
+
     // NEW: Update last arrival cycle (thread-safe compare-and-swap)
     uint64_t current_cycle = current_simulation_cycle.load();
     uint64_t prev_last = TM->last_arrival_cycle_.load();
     while (prev_last < current_cycle && !TM->last_arrival_cycle_.compare_exchange_weak(prev_last, current_cycle));
+
+    // NEW: Track slowest packet (thread-safe)
+    uint64_t prev_slowest = TM->slowest_packet_latency_.load();
+    if (p.trans_timer_ > (int)prev_slowest) {
+      // Try to update slowest packet if this one is slower
+      if (TM->slowest_packet_latency_.compare_exchange_strong(prev_slowest, p.trans_timer_)) {
+        // Successfully updated latency, now update other fields
+        TM->slowest_packet_src_.store(p.source_.chip_id * 100 + p.source_.node_id);
+        TM->slowest_packet_dst_.store(p.destination_.chip_id * 100 + p.destination_.node_id);
+        TM->slowest_packet_length_.store(p.length_);
+        TM->slowest_packet_hops_.store(p.internal_hops_);
+      }
+    }
+
     return;
   }
 }
