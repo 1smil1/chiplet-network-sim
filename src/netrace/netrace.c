@@ -218,6 +218,7 @@ nt_packet_t* nt_read_packet( nt_context_t* ctx ) {
 		unsigned short dst;  // Changed from unsigned char to support >255 nodes
 		unsigned char node_types;
 		unsigned char num_deps;
+		unsigned short custom_size;  // Custom packet size in bytes (0-65535)
 	};
 	#pragma pack(pop)
 
@@ -590,6 +591,20 @@ const char* nt_node_type_to_string( int type ) {
 }
 
 int nt_get_packet_size( nt_packet_t* packet ) {
+	// If custom_size is set (non-zero), use it
+	// Each packet has its own independent custom_size value
+	if (packet->custom_size > 0) {
+		return packet->custom_size;
+	}
+
+	// WARNING: custom_size=0, falling back to type lookup table
+	// This may indicate a bug if custom size mode was intended
+	#ifdef DEBUG_NETRACE
+	fprintf(stderr, "WARNING: Packet %u has custom_size=0, using type-based size=%d bytes\n",
+	        packet->id, (packet->type < NT_NUM_PACKET_TYPES) ? nt_packet_sizes[packet->type] : nt_packet_sizes[0]);
+	#endif
+
+	// Fall back to type lookup table (backward compatible)
 	if( packet->type < NT_NUM_PACKET_TYPES ) {
 		return nt_packet_sizes[packet->type];
 	} else {

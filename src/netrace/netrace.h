@@ -87,6 +87,7 @@ struct nt_packet {
 	unsigned char node_types;
 	unsigned char num_deps;
 	nt_dependency_t* deps;
+	unsigned short custom_size;  // Custom packet size in bytes (0-65535)
 };
 
 struct nt_dep_ref_node {

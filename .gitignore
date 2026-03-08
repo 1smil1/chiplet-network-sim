@@ -384,3 +384,7 @@ Claude Conversations/
 *.zip
 *.log
 *.bz2
+*.json
+*.ini 
+/chip/chiplet-network-sim/input
+/input

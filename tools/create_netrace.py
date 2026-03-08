@@ -95,7 +95,8 @@ class NetracePacket:
     def __init__(self, cycle: int, packet_id: int, src: int, dst: int,
                  pkt_type: int = PacketType.ReadReq, addr: int = 0,
                  src_type: int = NodeType.L1D, dst_type: int = NodeType.L2,
-                 dependencies: List[int] = None):
+                 dependencies: List[int] = None,
+                 custom_size: int = 0):
         self.cycle = cycle
         self.id = packet_id
         self.addr = addr
@@ -105,20 +106,22 @@ class NetracePacket:
         self.node_types = (src_type << 4) | dst_type
         self.dependencies = dependencies or []
         self.num_deps = len(self.dependencies)
+        self.custom_size = custom_size  # Custom packet size in bytes (0-65535)
 
     def to_bytes(self) -> bytes:
         """转换为二进制格式"""
         packet_pack = struct.pack(
-            '<QIIBxHHBB',     # x = padding byte for alignment
+            '<QIIBxHHBBH',    # Added H for custom_size (unsigned short, 2 bytes)
             self.cycle,       # unsigned long long (8 bytes)
             self.id,          # unsigned int (4 bytes)
             self.addr,        # unsigned int (4 bytes)
             self.type,        # unsigned char (1 byte)
-                             # [1 byte padding added by X]
+                             # [1 byte padding added by x]
             self.src,         # unsigned short (2 bytes) - CHANGED to support >255 nodes
             self.dst,         # unsigned short (2 bytes) - CHANGED to support >255 nodes
             self.node_types,  # unsigned char (1 byte)
-            self.num_deps     # unsigned char (1 byte)
+            self.num_deps,    # unsigned char (1 byte)
+            self.custom_size  # unsigned short (2 bytes) - Custom packet size
         )
 
         # 添加依赖关系
