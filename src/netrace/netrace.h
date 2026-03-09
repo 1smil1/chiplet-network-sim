@@ -86,8 +86,8 @@ struct nt_packet {
 	unsigned short dst;  // Changed from unsigned char to support >255 nodes
 	unsigned char node_types;
 	unsigned char num_deps;
-	nt_dependency_t* deps;
-	unsigned short custom_size;  // Custom packet size in bytes (0-65535)
+	unsigned short custom_size;  // Custom packet size in bytes (0-65535) - MUST be before deps pointer!
+	nt_dependency_t* deps;       // Pointer field MUST be last to match binary format
 };
 
 struct nt_dep_ref_node {

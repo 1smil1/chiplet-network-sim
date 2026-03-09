@@ -376,7 +376,16 @@ void TrafficManager::netrace(std::vector<Packet*>& vecmess, uint64_t cyc) {
     src = trace_packet->src;
     dest = trace_packet->dst;
     if (src != dest) {
-      int packet_length = ceil((double)nt_get_packet_size(trace_packet) / 16);  // 16B Bus width
+      int packet_size = nt_get_packet_size(trace_packet);
+      int packet_length = ceil((double)packet_size / 16);  // 16B Bus width
+
+      // DEBUG: Print packet size info for first 5 packets
+      static int debug_count = 0;
+      if (debug_count < 5) {
+        printf("[DEBUG] Packet %u: custom_size=%u bytes, packet_size=%d bytes, flits=%d\n",
+               trace_packet->id, trace_packet->custom_size, packet_size, packet_length);
+        debug_count++;
+      }
       // Packet* packet =
       //     new Packet(NodeID(src % core_per_chip, src / core_per_chip),
       //                NodeID(dest % core_per_chip, dest / core_per_chip), packet_length);
