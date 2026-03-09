@@ -30,7 +30,7 @@
 
 const char* nt_packet_types[] = { "InvalidCmd", "ReadReq", "ReadResp",
 				"ReadRespWithInvalidate", "WriteReq", "WriteResp",
-				"Writeback", "InvalidCmd", "InvalidCmd", "InvalidCmd",
+				"Writeback", "InvalidCmd", "CustomSize", "InvalidCmd",
 				"InvalidCmd", "InvalidCmd", "InvalidCmd", "UpgradeReq",
 				"UpgradeResp", "ReadExReq", "ReadExResp", "InvalidCmd",
 				"InvalidCmd", "InvalidCmd", "InvalidCmd", "InvalidCmd",
@@ -40,7 +40,7 @@ const char* nt_packet_types[] = { "InvalidCmd", "ReadReq", "ReadResp",
 
 int nt_packet_sizes[] = { /*InvalidCmd*/ -1, /*ReadReq*/ 8, /*ReadResp*/ 72,
 				/*ReadRespWithInvalidate*/ 72, /*WriteReq*/ 72, /*WriteResp*/ 8,
-				/*Writeback*/ 72, /*InvalidCmd*/ -1, /*InvalidCmd*/ -1, /*InvalidCmd*/ -1,
+				/*Writeback*/ 72, /*InvalidCmd*/ -1, /*CustomSize*/ 0, /*InvalidCmd*/ -1,
 				/*InvalidCmd*/ -1, /*InvalidCmd*/ -1, /*InvalidCmd*/ -1, /*UpgradeReq*/ 8,
 				/*UpgradeResp*/ 8, /*ReadExReq*/ 8, /*ReadExResp*/ 72, /*InvalidCmd*/ -1,
 				/*InvalidCmd*/ -1, /*InvalidCmd*/ -1, /*InvalidCmd*/ -1, /*InvalidCmd*/ -1,
@@ -591,21 +591,28 @@ const char* nt_node_type_to_string( int type ) {
 }
 
 int nt_get_packet_size( nt_packet_t* packet ) {
-	// If custom_size is set (non-zero), use it
-	// Each packet has its own independent custom_size value
-	if (packet->custom_size > 0) {
-		return packet->custom_size;
+	// Only CustomSize type uses custom_size field
+	if (packet->type == NT_PACKET_CUSTOMSIZE) {
+		if (packet->custom_size > 0) {
+			#ifdef DEBUG_NETRACE
+			fprintf(stderr, "[DEBUG] Packet %u: type=CustomSize, custom_size=%u bytes\n",
+			        packet->id, packet->custom_size);
+			#endif
+			return packet->custom_size;
+		} else {
+			// CustomSize type but size=0, this is an error
+			fprintf(stderr, "ERROR: Packet %u is CustomSize type but custom_size=0, using default 8 bytes\n",
+			        packet->id);
+			return 8;
+		}
 	}
 
-	// WARNING: custom_size=0, falling back to type lookup table
-	// This may indicate a bug if custom size mode was intended
-	#ifdef DEBUG_NETRACE
-	fprintf(stderr, "WARNING: Packet %u has custom_size=0, using type-based size=%d bytes\n",
-	        packet->id, (packet->type < NT_NUM_PACKET_TYPES) ? nt_packet_sizes[packet->type] : nt_packet_sizes[0]);
-	#endif
-
-	// Fall back to type lookup table (backward compatible)
+	// Other types (ReadReq, WriteReq, etc.) use lookup table
 	if( packet->type < NT_NUM_PACKET_TYPES ) {
+		#ifdef DEBUG_NETRACE
+		fprintf(stderr, "[DEBUG] Packet %u: type=%s (%u), using lookup table size=%d bytes\n",
+		        packet->id, nt_packet_type_to_string(packet), packet->type, nt_packet_sizes[packet->type]);
+		#endif
 		return nt_packet_sizes[packet->type];
 	} else {
 		return nt_packet_sizes[0];

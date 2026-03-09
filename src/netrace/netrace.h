@@ -49,6 +49,15 @@
 #define NT_NODE_TYPE_MC		3
 #define NT_READ_AHEAD		1000000
 
+// Packet type definitions
+#define NT_PACKET_INVALID_CMD		0
+#define NT_PACKET_READREQ		1
+#define NT_PACKET_READRESP		2
+#define NT_PACKET_WRITEREQ		4
+#define NT_PACKET_WRITERESP		5
+#define NT_PACKET_WRITEBACK		6
+#define NT_PACKET_CUSTOMSIZE		8
+
 // Type Declaration
 typedef unsigned int nt_dependency_t;
 typedef struct nt_header nt_header_t;

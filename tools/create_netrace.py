@@ -26,6 +26,7 @@ class PacketType:
     WriteReq = 4
     WriteResp = 5
     Writeback = 6
+    CustomSize = 8  # Custom packet size type (uses custom_size field)
     UpgradeReq = 13
     UpgradeResp = 14
     ReadExReq = 15
