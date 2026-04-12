@@ -112,7 +112,7 @@ class NetracePacket:
     def to_bytes(self) -> bytes:
         """转换为二进制格式"""
         packet_pack = struct.pack(
-            '<QIIBxHHBBH',    # Added H for custom_size (unsigned short, 2 bytes)
+            '<QIIBxHHBBI',    # I for custom_size (unsigned int, 4 bytes)
             self.cycle,       # unsigned long long (8 bytes)
             self.id,          # unsigned int (4 bytes)
             self.addr,        # unsigned int (4 bytes)
@@ -122,7 +122,7 @@ class NetracePacket:
             self.dst,         # unsigned short (2 bytes) - CHANGED to support >255 nodes
             self.node_types,  # unsigned char (1 byte)
             self.num_deps,    # unsigned char (1 byte)
-            self.custom_size  # unsigned short (2 bytes) - Custom packet size
+            self.custom_size  # unsigned int (4 bytes) - Custom packet size
         )
 
         # 添加依赖关系

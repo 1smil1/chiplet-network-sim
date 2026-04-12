@@ -33,7 +33,7 @@ struct Channel {
 
 const Channel on_chip_channel(1, 1);
 const Channel off_chip_parallel_channel(1, 2);
-const Channel off_chip_serial_channel(2, 4);
+const Channel off_chip_serial_channel(1, 8);
 const Channel long_distance_channel(1, 10);
 
 struct Parameters {

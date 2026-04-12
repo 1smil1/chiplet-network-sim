@@ -218,7 +218,7 @@ nt_packet_t* nt_read_packet( nt_context_t* ctx ) {
 		unsigned short dst;  // Changed from unsigned char to support >255 nodes
 		unsigned char node_types;
 		unsigned char num_deps;
-		unsigned short custom_size;  // Custom packet size in bytes (0-65535)
+		unsigned int custom_size;    // Custom packet size in bytes (0-4294967295)
 	};
 	#pragma pack(pop)
 
