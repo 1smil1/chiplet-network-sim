@@ -31,10 +31,10 @@ struct Channel {
   }
 };
 
-const Channel on_chip_channel(1, 1);
-const Channel off_chip_parallel_channel(1, 2);
-const Channel off_chip_serial_channel(1, 8);
-const Channel long_distance_channel(1, 10);
+const Channel on_chip_channel(64, 1);
+const Channel off_chip_parallel_channel(64, 2);
+const Channel off_chip_serial_channel(64, 8);
+const Channel long_distance_channel(64, 10);
 
 struct Parameters {
  public:
