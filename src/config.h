@@ -17,7 +17,8 @@ const std::vector<std::string> topologies = {"SingleChipMesh", "DragonflySW",
                                                   "DragonflyChiplet"};
 const std::vector<std::string> traffic_patterns = {
     "test",       "uniform",     "hotspot",  "bitcomplement", "bittranspose", "bitreverse",
-    "bitshuffle", "adversarial", "sd_trace", "netrace", "ring_all_reduce", "ring_all_reduce_bi"};
+    "bitshuffle", "adversarial", "sd_trace", "netrace", "ring_all_reduce", "ring_all_reduce_bi",
+    "online_workload"};
 
 struct Channel {
   Channel(int link_width = 0, int link_latency = 0) : width(link_width), latency(link_latency) {}
@@ -63,8 +64,12 @@ struct Parameters {
   int issue_width;
 
   // I/O Files
-  std::string trace_file, netrace_file, output_file, log_file;
+  std::string trace_file, netrace_file, output_file, log_file, workload_file;
   std::string position_file;  // Custom node position file (optional)
+  bool pause_on_first_injection;
+  bool pause_on_input_done;
+  bool interactive_pause;
+  double cycle_frequency_ghz;
 
   void print_params() const {
     // print all memebers
@@ -84,9 +89,14 @@ struct Parameters {
     std::cout << std::setw(20) << "Issue Width: " << issue_width << std::endl;
     std::cout << std::setw(20) << "Trace File: " << trace_file << std::endl;
     std::cout << std::setw(20) << "Netrace File: " << netrace_file << std::endl;
+    std::cout << std::setw(20) << "Workload File: " << workload_file << std::endl;
     std::cout << std::setw(20) << "Output File: " << output_file << std::endl;
     std::cout << std::setw(20) << "Log File: " << log_file << std::endl;
     std::cout << std::setw(20) << "Position File: " << position_file << std::endl;
+    std::cout << std::setw(20) << "Pause First Inject: " << pause_on_first_injection << std::endl;
+    std::cout << std::setw(20) << "Pause Input Done: " << pause_on_input_done << std::endl;
+    std::cout << std::setw(20) << "Interactive Pause: " << interactive_pause << std::endl;
+    std::cout << std::setw(20) << "Cycle Freq GHz: " << cycle_frequency_ghz << std::endl;
   }
 };
 

@@ -1,3 +1,4 @@
+#include <boost/property_tree/json_parser.hpp>
 #include "config.h"
 
 // paser parameters from config file
@@ -29,9 +30,15 @@ Parameters::Parameters(const std::string &config_file) {
     trace_file = params_ptree.get<std::string>("Files.trace_file");
   else if (traffic == "netrace")
     netrace_file = params_ptree.get<std::string>("Files.netrace_file");
+  else if (traffic == "online_workload")
+    workload_file = params_ptree.get<std::string>("Files.workload_file");
   output_file = params_ptree.get<std::string>("Files.output_file", "../../output/output.csv");
   log_file = params_ptree.get<std::string>("Files.log_file", "../../output/log.txt");
   position_file = params_ptree.get<std::string>("Network.position_file", "");
+  pause_on_first_injection = params_ptree.get<bool>("Simulation.pause_on_first_injection", true);
+  pause_on_input_done = params_ptree.get<bool>("Simulation.pause_on_input_done", true);
+  interactive_pause = params_ptree.get<bool>("Simulation.interactive_pause", false);
+  cycle_frequency_ghz = params_ptree.get<double>("Simulation.cycle_frequency_ghz", 1.0);
 
   print_params();
 }

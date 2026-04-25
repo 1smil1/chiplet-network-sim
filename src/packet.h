@@ -30,6 +30,11 @@ class Packet {
   int parallel_hops_;
   int serial_hops_;
   int other_hops_;
+  int input_id_;
+  int phase_id_;
+  int task_id_;
+  int template_packet_id_;
+  bool completion_recorded_;
   bool finished_;      // check message whether arrived
   bool releaselink_;   // if the tail of a message shifts , the physical link
                        // the message occupied should release.

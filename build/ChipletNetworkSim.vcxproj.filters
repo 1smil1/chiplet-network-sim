@@ -16,6 +16,9 @@
     <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\online_workload.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\packet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

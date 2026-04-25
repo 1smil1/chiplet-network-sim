@@ -323,6 +323,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\config.cpp" />
     <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\main.cpp" />
     <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\node.cpp" />
+    <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\online_workload.cpp" />
     <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\packet.cpp" />
     <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\system.cpp" />
     <ClCompile Include="D:\python_prj\neurosim_test\neurosim_win_dse\chip\chiplet-network-sim\src\traffic_manager.cpp" />

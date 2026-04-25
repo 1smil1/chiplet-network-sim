@@ -21,6 +21,11 @@ Packet::Packet(NodeID source, NodeID destination, int length) {
     parallel_hops_ = 0;
     serial_hops_ = 0;
     other_hops_ = 0;
+    input_id_ = -1;
+    phase_id_ = -1;
+    task_id_ = -1;
+    template_packet_id_ = -1;
+    completion_recorded_ = false;
     finished_ = false;
     releaselink_ = false;
 }
