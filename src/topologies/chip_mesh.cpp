@@ -35,7 +35,7 @@ void NodeMesh::set_node(Chip* chip, NodeID id) {
 
   // VERIFICATION DEBUG OUTPUT
   ChipMesh* chip_mesh = dynamic_cast<ChipMesh*>(chip_);
-  if (chip_mesh && id.chip_id < 5) {  // First 5 chips only
+  if (param->online_debug && chip_mesh && id.chip_id < 5) {  // First 5 chips only
     int chip_x = chip_mesh->chip_coordinate_[0];
     int chip_y = chip_mesh->chip_coordinate_[1];
     int global_x = chip_x * k_node_ + x_;
@@ -82,7 +82,7 @@ std::map<int, std::pair<int, int>> NodeMesh::load_all_positions(const std::strin
       loaded_count++;
 
       // Debug output for first 10 nodes
-      if (loaded_count <= 10) {
+      if (param->online_debug && loaded_count <= 10) {
         fprintf(stderr, "[METHOD2] Loaded: py_node_id=%d → pos=(%d,%d), noc_chip=%d, c_node_id=%d, type=%s\n",
                 py_node_id, x, y, noc_chip, c_node_id, type_str.c_str());
       }
@@ -90,7 +90,7 @@ std::map<int, std::pair<int, int>> NodeMesh::load_all_positions(const std::strin
   }
   file.close();
 
-  if (loaded_count > 0) {
+  if (param->online_debug && loaded_count > 0) {
     fprintf(stderr, "[METHOD2] Loaded %d positions from %s\n", loaded_count, position_file.c_str());
   }
 
@@ -153,7 +153,9 @@ void ChipMesh::build_position_index() {
     std::pair<int, int> pos = std::make_pair(node->x_, node->y_);
     position_to_node_id_[pos] = node_id;
   }
-  std::cout << "[ChipMesh] Built position index: " << position_to_node_id_.size() << " nodes" << std::endl;
+  if (param->online_debug) {
+    std::cout << "[ChipMesh] Built position index: " << position_to_node_id_.size() << " nodes" << std::endl;
+  }
 }
 
 int ChipMesh::find_node_at(int x, int y) {

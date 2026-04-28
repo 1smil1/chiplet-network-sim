@@ -183,7 +183,7 @@ int main(int argc, char* argv[]) {
       }
       const std::chrono::steady_clock::time_point progress_now =
           std::chrono::steady_clock::now();
-      if (progress_now - progress_last >= progress_interval) {
+      if (param->online_debug && progress_now - progress_last >= progress_interval) {
         scheduler.PrintProgressSummary(unfinished_packets);
         int debug_printed = 0;
         std::cout << "  [ONLINE PROGRESS] sample_packets:";
@@ -222,6 +222,25 @@ int main(int argc, char* argv[]) {
 
       current_simulation_cycle.store(scheduler.current_cycle());
       run_one_cycle(all_packets, network);
+
+      // DEBUG: Print packet state after update
+      static int after_update_debug = 0;
+      if (after_update_debug < 10) {
+        std::cout << "[AFTER_UPDATE] cycle=" << current_simulation_cycle.load() << " ";
+        for (size_t i = 0; i < all_packets.size(); ++i) {
+          Packet* packet = all_packets[i];
+          if (!packet->finished_ && packet->phase_id_ == 0 && packet->task_id_ == 0) {
+            std::cout << "phase0_pkt: link_timer=" << packet->link_timer_
+                      << " switch_alloc=" << packet->switch_allocated_
+                      << " wait=" << packet->wait_timer_
+                      << " next_vc_buf=" << packet->next_vc_.buffer
+                      << std::endl;
+            after_update_debug++;
+            break;
+          }
+        }
+      }
+
       scheduler.AdvanceOneCycle();
     }
 

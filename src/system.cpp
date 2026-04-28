@@ -80,13 +80,21 @@ void System::routing(Packet& p) const {
 
 void System::vc_allocate(Packet& p) const {
   VCInfo current_vc = p.head_trace();
+  static int vc_debug_count = 0;
+  bool should_debug = (p.phase_id_ >= 0 && p.phase_id_ <= 2 && vc_debug_count < 5);
+
   if (current_vc.buffer == nullptr ||
       current_vc.head_packet() == &p) {  // the packet is at the source or at the front of the queue
+    if (should_debug) {
+      printf("[VC_ALLOC] phase=%d candidates=%zu\n", p.phase_id_, p.candidate_channels_.size());
+    }
     for (auto& vc : p.candidate_channels_) {
       if (vc.buffer->is_empty(vc.vcb))                        // try to allocate a empty vc
         if (vc.buffer->allocate_buffer(vc.vcb, p.length_)) {  // packet switching
           // allocating sucessed
+          if (should_debug) printf("[VC_ALLOC] SUCCESS phase=%d allocated empty VC\n", p.phase_id_);
           p.next_vc_ = vc;
+          vc_debug_count++;
           return;
         }
     }
@@ -94,26 +102,43 @@ void System::vc_allocate(Packet& p) const {
     for (auto& vc : p.candidate_channels_) {
       if (vc.buffer->allocate_buffer(vc.vcb, p.length_)) {  // packet switching
         // allocating sucessed
+        if (should_debug) printf("[VC_ALLOC] SUCCESS phase=%d allocated non-empty VC\n", p.phase_id_);
         p.next_vc_ = vc;
+        vc_debug_count++;
         return;
       }
     }
+    if (should_debug) printf("[VC_ALLOC] FAILED phase=%d no VC available\n", p.phase_id_);
+    vc_debug_count++;
   }
 }
 
 void System::switch_allocate(Packet& p) {
   VCInfo current_vc = p.head_trace();
+  static int sw_debug_count = 0;
+  bool should_debug = (p.phase_id_ >= 0 && p.phase_id_ <= 2 && sw_debug_count < 10);
+
   if (current_vc.buffer == nullptr) {              // the packet is at the source
     if (p.next_vc_.buffer->allocate_in_link(p)) {  // wait for link to the next buffer
       p.switch_allocated_ = true;
+      if (should_debug) printf("[SW_ALLOC] SUCCESS phase=%d at source, next_vc_latency=%d\n", p.phase_id_, p.next_vc_.buffer->channel_.latency);
+    } else {
+      if (should_debug) printf("[SW_ALLOC] FAILED phase=%d at source, no in_link\n", p.phase_id_);
     }
+    sw_debug_count++;
   } else if (current_vc.head_packet() == &p) {
     if (current_vc.buffer->allocate_sw_link()) {     // try to allocate the link to the switch
       if (p.next_vc_.buffer->allocate_in_link(p)) {  // wait for link to the next buffer
         p.switch_allocated_ = true;
-      } else
+        if (should_debug) printf("[SW_ALLOC] SUCCESS phase=%d at network, next_vc_latency=%d\n", p.phase_id_, p.next_vc_.buffer->channel_.latency);
+      } else {
+        if (should_debug) printf("[SW_ALLOC] FAILED phase=%d no in_link\n", p.phase_id_);
         current_vc.buffer->release_sw_link();
+      }
+    } else {
+      if (should_debug) printf("[SW_ALLOC] FAILED phase=%d no sw_link\n", p.phase_id_);
     }
+    sw_debug_count++;
   }
 }
 
@@ -157,6 +182,12 @@ void System::update(Packet& p) {
     temp1 = p.next_vc_;
     p.wait_timer_ = 0;
     p.link_timer_ = p.next_vc_.buffer->channel_.latency;
+    static int sw_success_debug = 0;
+    if (sw_success_debug < 5 && p.phase_id_ >= 0 && p.phase_id_ <= 2) {
+      printf("[UPDATE] switch_allocated=true phase=%d, setting link_timer=%d, latency=%d, buffer=%p\n",
+             p.phase_id_, p.link_timer_, p.next_vc_.buffer->channel_.latency, (void*)p.next_vc_.buffer);
+      sw_success_debug++;
+    }
 #ifdef DEBUG
     TM->traffic_map_[temp1.buffer]++;
 #endif  // DEBUG
@@ -171,6 +202,14 @@ void System::update(Packet& p) {
     p.candidate_channels_.clear();
     p.next_vc_ = VCInfo();
     p.switch_allocated_ = false;
+
+    // DEBUG: After clearing switch_allocated
+    static int after_clear_debug = 0;
+    if (after_clear_debug < 5 && p.phase_id_ >= 0 && p.phase_id_ <= 2) {
+      printf("[AFTER_CLEAR] phase=%d link_timer=%d wait=%d next_vc_buf=%p\n",
+             p.phase_id_, p.link_timer_, p.wait_timer_, (void*)p.next_vc_.buffer);
+      after_clear_debug++;
+    }
   } else {
     temp1 = p.head_trace();
     // find the flit that fall behind the head flit
@@ -238,6 +277,15 @@ void System::update(Packet& p) {
         TM->slowest_packet_length_.store(p.length_);
         TM->slowest_packet_hops_.store(p.internal_hops_);
       }
+    }
+
+    // DEBUG: Print packet state at end of update
+    static int end_of_update_debug = 0;
+    if (end_of_update_debug < 20 && p.phase_id_ >= 0 && p.phase_id_ <= 2) {
+      printf("[END_OF_UPDATE] phase=%d link_timer=%d switch_alloc=%d wait=%d finished=%d next_vc_buf=%p tail_dst=(%d:%d)\n",
+             p.phase_id_, p.link_timer_, p.switch_allocated_, p.wait_timer_, p.finished_,
+             (void*)p.next_vc_.buffer, p.tail_trace().id.chip_id, p.tail_trace().id.node_id);
+      end_of_update_debug++;
     }
 
     return;

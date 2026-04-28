@@ -184,6 +184,12 @@ bool OnlineWorkloadScheduler::LoadGroupTemplate(int group_id,
     templ.src_node = static_cast<int>(packet->src);
     templ.dst_node = static_cast<int>(packet->dst);
     templ.size_bytes = nt_get_packet_size(packet);
+    // DEBUG: print raw values read from .bz2
+    if (group.packets.size() < 10) {
+      printf("[LOAD_BZ2] group=%d pkt=%zu: raw src=%u dst=%u size=%d (type=%d addr=%u)\n",
+             group_id, group.packets.size(), (unsigned)packet->src, (unsigned)packet->dst,
+             templ.size_bytes, (int)packet->type, packet->addr);
+    }
     group.packets.push_back(templ);
     nt_packet_free(packet);
   }
@@ -363,11 +369,6 @@ void OnlineWorkloadScheduler::MarkPhaseDone(OnlinePhaseState& phase_state) {
   if (phase_state.comm_end_cycle < phase_state.compute_end_cycle) {
     phase_state.comm_end_cycle = phase_state.compute_end_cycle;
   }
-  for (size_t i = 0; i < phase_state.def.resource_ids.size(); ++i) {
-    const int resource_id = phase_state.def.resource_ids[i];
-    resource_release_cycle_[resource_id] = phase_state.compute_end_cycle;
-    resource_owner_phase_[resource_id] = -1;
-  }
 
   OnlineInputSummary& input_summary = inputs_[phase_state.def.input_id];
   input_summary.done_phase_count++;
@@ -533,9 +534,17 @@ int OnlineWorkloadScheduler::InjectReadyPackets(std::vector<Packet*>& packets) {
 
     for (size_t j = 0; j < group_template.packets.size(); ++j) {
       const OnlinePacketTemplate& templ = group_template.packets[j];
+      NodeID src_nid = network->id2nodeid(templ.src_node);
+      NodeID dst_nid = network->id2nodeid(templ.dst_node);
+      // DEBUG: print id2nodeid conversion for first packets of each phase
+      if (j < 5 || phase_state.def.phase_id == 0) {
+        printf("[INJECT_PKT] phase=%d pkt=%zu: templ_src=%d -> nid=(%d:%d), templ_dst=%d -> nid=(%d:%d)\n",
+               phase_state.def.phase_id, (int)j,
+               templ.src_node, src_nid.node_id, src_nid.chip_id,
+               templ.dst_node, dst_nid.node_id, dst_nid.chip_id);
+      }
       Packet* packet =
-          new Packet(network->id2nodeid(templ.src_node), network->id2nodeid(templ.dst_node),
-                     BytesToFlits(templ.size_bytes));
+          new Packet(src_nid, dst_nid, BytesToFlits(templ.size_bytes));
       packet->input_id_ = phase_state.def.input_id;
       packet->phase_id_ = phase_state.def.phase_id;
       packet->task_id_ = run_state.run_id;

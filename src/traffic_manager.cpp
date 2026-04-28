@@ -381,7 +381,7 @@ void TrafficManager::netrace(std::vector<Packet*>& vecmess, uint64_t cyc) {
 
       // DEBUG: Print packet size info for first 5 packets
       static int debug_count = 0;
-      if (debug_count < 5) {
+      if (param->online_debug && debug_count < 5) {
         printf("[DEBUG] Packet %u: custom_size=%u bytes, packet_size=%d bytes, flits=%d\n",
                trace_packet->id, trace_packet->custom_size, packet_size, packet_length);
         debug_count++;
@@ -393,7 +393,7 @@ void TrafficManager::netrace(std::vector<Packet*>& vecmess, uint64_t cyc) {
 
       // VERIFICATION DEBUG OUTPUT (first 10 packets only)
       uint64_t msg_count = all_message_num_.load();
-      if (msg_count < 10) {
+      if (param->online_debug && msg_count < 10) {
         NodeID src_id = network->id2nodeid(src);
         NodeID dst_id = network->id2nodeid(dest);
         fprintf(stderr, "[VERIFY] Packet %llu: src_c_node=%d → chip%d_node%d, "

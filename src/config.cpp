@@ -38,6 +38,7 @@ Parameters::Parameters(const std::string &config_file) {
   pause_on_first_injection = params_ptree.get<bool>("Simulation.pause_on_first_injection", true);
   pause_on_input_done = params_ptree.get<bool>("Simulation.pause_on_input_done", true);
   interactive_pause = params_ptree.get<bool>("Simulation.interactive_pause", false);
+  online_debug = params_ptree.get<bool>("Simulation.online_debug", false);
   cycle_frequency_ghz = params_ptree.get<double>("Simulation.cycle_frequency_ghz", 1.0);
 
   print_params();

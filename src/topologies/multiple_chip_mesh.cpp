@@ -141,6 +141,23 @@ void MultiChipMesh::XY_routing(Packet& s) const {
   int dis_x = dest_x - cur_x;  // x offset
   int dis_y = dest_y - cur_y;  // y offset
 
+  // DEBUG: Print routing info for problematic packets
+  static int debug_count = 0;
+  if (debug_count < 50 && (s.wait_timer_ > 1000 || (s.phase_id_ >= 0 && s.phase_id_ <= 2 && debug_count < 10))) {
+    printf("[XY_ROUTING_DEBUG] task=%d phase=%d src=(%d:%d) dst=(%d:%d) head=(%d:%d) cur_pos=(%d,%d) dest_pos=(%d,%d) dis=(%d,%d) wait=%d\n",
+           s.task_id_, s.phase_id_,
+           s.source_.chip_id, s.source_.node_id,
+           s.destination_.chip_id, s.destination_.node_id,
+           s.head_trace().id.chip_id, s.head_trace().id.node_id,
+           cur_x, cur_y, dest_x, dest_y, dis_x, dis_y, s.wait_timer_);
+
+    // Check link buffers
+    printf("[XY_ROUTING_DEBUG]   xneg_buf=%p xpos_buf=%p yneg_buf=%p ypos_buf=%p\n",
+           (void*)current_node->xneg_link_buffer_, (void*)current_node->xpos_link_buffer_,
+           (void*)current_node->yneg_link_buffer_, (void*)current_node->ypos_link_buffer_);
+    debug_count++;
+  }
+
   if (dis_x < 0)  // first x
     for (int i = 0; i < current_node->xneg_link_buffer_->vc_num_; i++)
       s.candidate_channels_.push_back(VCInfo(current_node->xneg_link_buffer_, i));
@@ -154,6 +171,11 @@ void MultiChipMesh::XY_routing(Packet& s) const {
     else if (dis_y > 0)
       for (int i = 0; i < current_node->ypos_link_buffer_->vc_num_; i++)
         s.candidate_channels_.push_back(VCInfo(current_node->ypos_link_buffer_, i));
+  }
+
+  // DEBUG: Check if no candidate channels found
+  if (debug_count <= 10 && s.wait_timer_ > 100000 && s.candidate_channels_.empty()) {
+    printf("[XY_ROUTING_ERROR] No candidate channels! dis_x=%d dis_y=%d\n", dis_x, dis_y);
   }
 }
 

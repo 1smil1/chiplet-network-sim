@@ -69,6 +69,7 @@ struct Parameters {
   bool pause_on_first_injection;
   bool pause_on_input_done;
   bool interactive_pause;
+  bool online_debug;
   double cycle_frequency_ghz;
 
   void print_params() const {
@@ -96,6 +97,7 @@ struct Parameters {
     std::cout << std::setw(20) << "Pause First Inject: " << pause_on_first_injection << std::endl;
     std::cout << std::setw(20) << "Pause Input Done: " << pause_on_input_done << std::endl;
     std::cout << std::setw(20) << "Interactive Pause: " << interactive_pause << std::endl;
+    std::cout << std::setw(20) << "Online Debug: " << online_debug << std::endl;
     std::cout << std::setw(20) << "Cycle Freq GHz: " << cycle_frequency_ghz << std::endl;
   }
 };

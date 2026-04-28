@@ -30,7 +30,7 @@ class MultiChipMesh : public System {
 
         // Debug output
         static std::set<int> printed_ids;
-        if (printed_ids.size() < 100 && printed_ids.find(id) == printed_ids.end()) {
+        if (param->online_debug && printed_ids.size() < 100 && printed_ids.find(id) == printed_ids.end()) {
           fprintf(stderr, "[METHOD2] py_node_id=%d → pos=(%d,%d) → chip_id=%d, node_id=%d\n",
                   id, x, y, chip_id, node_id);
           printed_ids.insert(id);
@@ -50,7 +50,7 @@ class MultiChipMesh : public System {
 
     // Debug output for Method 1
     static std::set<int> printed_ids_m1;
-    if (printed_ids_m1.size() < 100 && printed_ids_m1.find(id) == printed_ids_m1.end()) {
+    if (param->online_debug && printed_ids_m1.size() < 100 && printed_ids_m1.find(id) == printed_ids_m1.end()) {
       fprintf(stderr, "[METHOD1] c_node_id=%d → pos=(%d,%d) → chip_id=%d, node_id=%d\n",
               id, x, y, chip_id, node_id);
       printed_ids_m1.insert(id);
