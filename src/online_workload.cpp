@@ -341,7 +341,7 @@ void OnlineWorkloadScheduler::ReclaimCompletedPackets(std::vector<Packet*>& pack
   size_t write_index = 0;
   for (size_t i = 0; i < packets.size(); ++i) {
     Packet* packet = packets[i];
-    if (packet->finished_) {
+    if (packet->finished_ && !packet->releaselink_) {
       delete packet;
       continue;
     }
