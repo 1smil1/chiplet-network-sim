@@ -81,7 +81,8 @@ void System::routing(Packet& p) const {
 void System::vc_allocate(Packet& p) const {
   VCInfo current_vc = p.head_trace();
   static int vc_debug_count = 0;
-  bool should_debug = (p.phase_id_ >= 0 && p.phase_id_ <= 2 && vc_debug_count < 5);
+  bool should_debug = (param->online_debug &&
+                       p.phase_id_ >= 0 && p.phase_id_ <= 2 && vc_debug_count < 5);
 
   if (current_vc.buffer == nullptr ||
       current_vc.head_packet() == &p) {  // the packet is at the source or at the front of the queue
@@ -116,7 +117,8 @@ void System::vc_allocate(Packet& p) const {
 void System::switch_allocate(Packet& p) {
   VCInfo current_vc = p.head_trace();
   static int sw_debug_count = 0;
-  bool should_debug = (p.phase_id_ >= 0 && p.phase_id_ <= 2 && sw_debug_count < 10);
+  bool should_debug = (param->online_debug &&
+                       p.phase_id_ >= 0 && p.phase_id_ <= 2 && sw_debug_count < 10);
 
   if (current_vc.buffer == nullptr) {              // the packet is at the source
     if (p.next_vc_.buffer->allocate_in_link(p)) {  // wait for link to the next buffer
@@ -183,7 +185,8 @@ void System::update(Packet& p) {
     p.wait_timer_ = 0;
     p.link_timer_ = p.next_vc_.buffer->channel_.latency;
     static int sw_success_debug = 0;
-    if (sw_success_debug < 5 && p.phase_id_ >= 0 && p.phase_id_ <= 2) {
+    if (param->online_debug && sw_success_debug < 5 &&
+        p.phase_id_ >= 0 && p.phase_id_ <= 2) {
       printf("[UPDATE] switch_allocated=true phase=%d, setting link_timer=%d, latency=%d, buffer=%p\n",
              p.phase_id_, p.link_timer_, p.next_vc_.buffer->channel_.latency, (void*)p.next_vc_.buffer);
       sw_success_debug++;
@@ -205,7 +208,8 @@ void System::update(Packet& p) {
 
     // DEBUG: After clearing switch_allocated
     static int after_clear_debug = 0;
-    if (after_clear_debug < 5 && p.phase_id_ >= 0 && p.phase_id_ <= 2) {
+    if (param->online_debug && after_clear_debug < 5 &&
+        p.phase_id_ >= 0 && p.phase_id_ <= 2) {
       printf("[AFTER_CLEAR] phase=%d link_timer=%d wait=%d next_vc_buf=%p\n",
              p.phase_id_, p.link_timer_, p.wait_timer_, (void*)p.next_vc_.buffer);
       after_clear_debug++;
@@ -281,7 +285,8 @@ void System::update(Packet& p) {
 
     // DEBUG: Print packet state at end of update
     static int end_of_update_debug = 0;
-    if (end_of_update_debug < 20 && p.phase_id_ >= 0 && p.phase_id_ <= 2) {
+    if (param->online_debug && end_of_update_debug < 20 &&
+        p.phase_id_ >= 0 && p.phase_id_ <= 2) {
       printf("[END_OF_UPDATE] phase=%d link_timer=%d switch_alloc=%d wait=%d finished=%d next_vc_buf=%p tail_dst=(%d:%d)\n",
              p.phase_id_, p.link_timer_, p.switch_allocated_, p.wait_timer_, p.finished_,
              (void*)p.next_vc_.buffer, p.tail_trace().id.chip_id, p.tail_trace().id.node_id);

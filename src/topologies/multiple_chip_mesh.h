@@ -2,6 +2,14 @@
 #include "chip_mesh.h"
 #include "system.h"
 #include <set>
+#include <unordered_map>
+
+struct ChipletGridInfo {
+  int chip_x = 0;
+  int chip_y = 0;
+  int grid_x = 0;
+  int grid_y = 0;
+};
 
 class MultiChipMesh : public System {
  public:
@@ -19,14 +27,13 @@ class MultiChipMesh : public System {
         int x = pos_iter->second.first;
         int y = pos_iter->second.second;
 
-        // Calculate chip_id and node_id from position
-        int chip_x = x / k_node_;
-        int chip_y = y / k_node_;
-        int chip_id = chip_x + chip_y * chip_w_;
-
-        int local_x = x % k_node_;
-        int local_y = y % k_node_;
-        int node_id = local_x + local_y * k_node_;
+        int chip_id = 0;
+        int node_id = 0;
+        if (!position_to_nodeid(x, y, &chip_id, &node_id)) {
+          chip_id = (x / k_node_) + (y / k_node_) * chip_w_;
+          ChipletGridInfo grid = grid_for_chip(chip_id);
+          node_id = (x % k_node_) + (y % k_node_) * grid.grid_x;
+        }
 
         // Debug output
         static std::set<int> printed_ids;
@@ -42,11 +49,15 @@ class MultiChipMesh : public System {
 
     // Method 1: id is c_node_id, auto-calculate
     int K_x = k_node_ * chip_w_;
-    int K_y = k_node_ * chip_h_;
     int x = id % K_x;
     int y = id / K_x;
-    int node_id = x % k_node_ + (y % k_node_) * k_node_;
-    int chip_id = x / k_node_ + (y / k_node_) * chip_w_;
+    int chip_id = 0;
+    int node_id = 0;
+    if (!position_to_nodeid(x, y, &chip_id, &node_id)) {
+      chip_id = (x / k_node_) + (y / k_node_) * chip_w_;
+      ChipletGridInfo grid = grid_for_chip(chip_id);
+      node_id = (x % k_node_) + (y % k_node_) * grid.grid_x;
+    }
 
     // Debug output for Method 1
     static std::set<int> printed_ids_m1;
@@ -68,6 +79,12 @@ class MultiChipMesh : public System {
     return dynamic_cast<ChipMesh*>(chips_[id.chip_id]);
   }
   void connect_chiplets();
+  bool position_to_nodeid(int x, int y, int* chip_id, int* node_id) const;
+  bool is_active_node(NodeID id) const;
+  ChipletGridInfo grid_for_chip(int chip_id) const;
+  void load_nonuniform_tier_grid();
+  void add_channels(Buffer* buffer, Packet& s) const;
+  bool route_toward_overlap(Packet& s, int dx, int dy) const;
 
   void routing_algorithm(Packet& s) const override;
   void XY_routing(Packet& s) const;
@@ -80,6 +97,8 @@ class MultiChipMesh : public System {
   int k_chip_;      // Deprecated: kept for backward compatibility
   int chip_w_;      // Chiplet grid width (NEW)
   int chip_h_;      // Chiplet grid height (NEW)
+  bool use_nonuniform_grid_ = false;
+  std::unordered_map<int, ChipletGridInfo> chiplet_grids_;
 
   std::string d2d_IF_;
 };

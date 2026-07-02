@@ -128,6 +128,12 @@
 
 这是因为同一个 `.bz2` 模板可能被多个 phase 重复使用，必须给每次运行一个唯一实例 ID。
 
+当前 shared-prefix 模式又增加了：
+
+- `shared_follower_count_`
+
+该字段只在在线模式使用。若一个 packet 是某个 `shared_key` 的 leader，它记录同一 group run 内被它代表的 follower 数量；packet 到达时，调度器按 `1 + shared_follower_count_` 扣减逻辑完成计数。
+
 ### 3.6 新增 `tools/test_online_dynamic_injection.py`
 
 作用：
@@ -198,6 +204,21 @@
 
 - 这批同时注入的 packet 有哪些
 - 各自的 `src/dst/size` 是什么
+
+如果旁边存在同名 `.json` sidecar，C++ 会读取 `metadata.shared_prefix_policy` 和每个 packet 的 `shared_key`。`shared_key` 是 group-template 局部编号，`-1` 表示不共享。非负 key 只在同一个 group run 内比较，不跨不同 `.bz2`、不同 `group_id` 比较。
+
+`shared_prefix_policy` 的含义：
+
+- `0`: 不共享，所有逻辑 packet 都正常注入
+- `1`: leader-collapse，只注入同 key 的第一个 packet；leader 到达后 followers 一并逻辑完成
+- `2`: boundary fanout，只共享源端到目标芯粒边界的 prefix；prefix 到达后，从边界注入 fanout packet 到每个真实 dst，使目标芯粒内部竞争仍被建模
+
+结果 JSON 中每个 group run 会输出：
+
+- `packet_count`: 原始逻辑 packet 数
+- `physical_packet_count`: 实际注入 NoC 的 packet 数
+- `shared_follower_count`: 被 leader 代表、没有实际注入的 follower 数
+- `boundary_fanout_packet_count`: policy 2 下从目标芯粒边界展开注入的 fanout packet 数
 
 它不再负责回答：
 

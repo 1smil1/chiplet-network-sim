@@ -127,15 +127,17 @@ void NodeMesh::load_custom_positions(const std::string& position_file) {
   }
 }
 
-ChipMesh::ChipMesh(int k_node, int vc_num, int buffer_size) {
-  k_node_ = k_node;
-  number_nodes_ = k_node_ * k_node_;
+ChipMesh::ChipMesh(int k_node, int vc_num, int buffer_size, int active_grid_x, int active_grid_y) {
+  active_grid_x_ = (active_grid_x > 0) ? active_grid_x : k_node;
+  active_grid_y_ = (active_grid_y > 0) ? active_grid_y : k_node;
+  k_node_ = active_grid_x_;
+  number_nodes_ = active_grid_x_ * active_grid_y_;
   number_cores_ = number_nodes_;
   // port_number_ = Knode_ * 4 - 4;
   nodes_.reserve(number_nodes_);
   chip_coordinate_.resize(2);
   for (int node_id = 0; node_id < number_nodes_; node_id++) {
-    nodes_.push_back(new NodeMesh(k_node_, vc_num, buffer_size));
+    nodes_.push_back(new NodeMesh(active_grid_x_, vc_num, buffer_size));
   }
 }
 
@@ -177,7 +179,6 @@ void ChipMesh::set_chip(System* system, int chip_id) {
     NodeMesh* node = get_node(node_id);
     int x = node->x_;
     int y = node->y_;
-
     // Find left neighbor (x-1, y)
     int left_id = find_node_at(x - 1, y);
     if (left_id >= 0) {

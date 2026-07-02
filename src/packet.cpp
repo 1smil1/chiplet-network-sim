@@ -25,6 +25,8 @@ Packet::Packet(NodeID source, NodeID destination, int length) {
     phase_id_ = -1;
     task_id_ = -1;
     template_packet_id_ = -1;
+    shared_follower_count_ = 0;
+    shared_fanout_id_ = -1;
     completion_recorded_ = false;
     finished_ = false;
     releaselink_ = false;

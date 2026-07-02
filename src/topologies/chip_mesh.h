@@ -41,7 +41,7 @@ class NodeMesh : public Node {
 
 class ChipMesh : public Chip {
  public:
-  ChipMesh(int k_node, int vc_num, int buffer_size);
+  ChipMesh(int k_node, int vc_num, int buffer_size, int active_grid_x = -1, int active_grid_y = -1);
   ~ChipMesh();
   void set_chip(System* system, int chip_id) override;
   inline NodeMesh* get_node(int node_id) const override {
@@ -56,6 +56,8 @@ class ChipMesh : public Chip {
   int find_node_at(int x, int y);  // Returns node_id or -1 if not found
 
   int k_node_;
+  int active_grid_x_;
+  int active_grid_y_;
   std::vector<int> chip_coordinate_;
 
  private:

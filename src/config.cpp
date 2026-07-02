@@ -35,6 +35,7 @@ Parameters::Parameters(const std::string &config_file) {
   output_file = params_ptree.get<std::string>("Files.output_file", "../../output/output.csv");
   log_file = params_ptree.get<std::string>("Files.log_file", "../../output/log.txt");
   position_file = params_ptree.get<std::string>("Network.position_file", "");
+  nonuniform_tier_grid_file = params_ptree.get<std::string>("Network.nonuniform_tier_grid_file", "");
   pause_on_first_injection = params_ptree.get<bool>("Simulation.pause_on_first_injection", true);
   pause_on_input_done = params_ptree.get<bool>("Simulation.pause_on_input_done", true);
   interactive_pause = params_ptree.get<bool>("Simulation.interactive_pause", false);

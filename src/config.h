@@ -66,6 +66,7 @@ struct Parameters {
   // I/O Files
   std::string trace_file, netrace_file, output_file, log_file, workload_file;
   std::string position_file;  // Custom node position file (optional)
+  std::string nonuniform_tier_grid_file;  // Per-chiplet grid metadata (optional)
   bool pause_on_first_injection;
   bool pause_on_input_done;
   bool interactive_pause;
@@ -94,6 +95,7 @@ struct Parameters {
     std::cout << std::setw(20) << "Output File: " << output_file << std::endl;
     std::cout << std::setw(20) << "Log File: " << log_file << std::endl;
     std::cout << std::setw(20) << "Position File: " << position_file << std::endl;
+    std::cout << std::setw(20) << "Nonuniform Grid File: " << nonuniform_tier_grid_file << std::endl;
     std::cout << std::setw(20) << "Pause First Inject: " << pause_on_first_injection << std::endl;
     std::cout << std::setw(20) << "Pause Input Done: " << pause_on_input_done << std::endl;
     std::cout << std::setw(20) << "Interactive Pause: " << interactive_pause << std::endl;

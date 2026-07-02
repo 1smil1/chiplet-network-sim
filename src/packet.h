@@ -34,6 +34,8 @@ class Packet {
   int phase_id_;
   int task_id_;
   int template_packet_id_;
+  int shared_follower_count_;
+  int shared_fanout_id_;
   bool completion_recorded_;
   bool finished_;      // check message whether arrived
   bool releaselink_;   // if the tail of a message shifts , the physical link

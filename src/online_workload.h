@@ -14,11 +14,13 @@ struct OnlinePacketTemplate {
   int src_node = -1;
   int dst_node = -1;
   int size_bytes = 0;
+  int shared_key = -1;
 };
 
 struct OnlineGroupTemplate {
   int group_id = -1;
   std::string bz2_path;
+  int shared_prefix_policy = 0;
   std::vector<OnlinePacketTemplate> packets;
 };
 
@@ -73,7 +75,27 @@ struct OnlineGroupRunSummary {
   uint64_t finish_cycle = 0;
   int remaining_packet_count = 0;
   int packet_count = 0;
+  int physical_packet_count = 0;
+  int shared_follower_count = 0;
+  int boundary_fanout_packet_count = 0;
   bool done = false;
+};
+
+struct OnlinePendingFanout {
+  int fanout_id = -1;
+  int run_id = -1;
+  int input_id = -1;
+  int phase_id = -1;
+  std::vector<OnlinePacketTemplate> packets;
+};
+
+struct OnlineChipletGrid {
+  int chip_id = -1;
+  int tier_id = -1;
+  int chip_x = 0;
+  int chip_y = 0;
+  int grid_x = 0;
+  int grid_y = 0;
 };
 
 class OnlineWorkloadScheduler {
@@ -98,12 +120,18 @@ class OnlineWorkloadScheduler {
   bool LoadFromManifest(const boost::property_tree::ptree& root,
                         const std::string& workload_file,
                         std::string* error);
+  bool LoadNonuniformTierGrid(const std::string& path, std::string* error);
   bool LoadGroupTemplate(int group_id, const std::string& bz2_path, std::string* error);
   bool Validate(std::string* error) const;
   bool ResourcesAvailable(const OnlinePhaseState& phase_state) const;
   uint64_t EarliestResourceReadyCycle(const OnlinePhaseState& phase_state) const;
   void MarkPhaseDone(OnlinePhaseState& phase_state);
   void OnGroupRunDone(OnlineGroupRunSummary& run_state, uint64_t finish_cycle);
+  void InjectBoundaryFanout(const Packet& prefix_packet,
+                            std::vector<Packet*>& packets,
+                            uint64_t finish_cycle);
+  NodeID ComputeDestinationBoundary(NodeID src, NodeID dst) const;
+  bool ComputeNonuniformDestinationBoundary(NodeID src, NodeID dst, NodeID* boundary) const;
   void MaybePauseOnFirstInjection(int input_id, size_t inflight_packet_count) const;
   void MaybePauseOnInputDone(int input_id, size_t inflight_packet_count) const;
   static int BytesToFlits(int size_bytes);
@@ -116,6 +144,7 @@ class OnlineWorkloadScheduler {
   int num_network_nodes_ = 0;
   uint64_t current_cycle_ = 0;
   int next_run_id_ = 0;
+  int next_fanout_id_ = 0;
   std::vector<uint64_t> resource_release_cycle_;
   std::vector<int> resource_owner_phase_;
   std::vector<OnlinePhaseState> phases_;
@@ -126,4 +155,7 @@ class OnlineWorkloadScheduler {
   std::unordered_map<int, std::vector<int> > dependents_;
   std::unordered_map<int, int> group_id_to_index_;
   std::unordered_map<int, int> run_id_to_index_;
+  std::unordered_map<int, OnlinePendingFanout> pending_fanouts_;
+  std::unordered_map<int, OnlineChipletGrid> nonuniform_chiplets_;
+  bool use_nonuniform_tier_grid_ = false;
 };

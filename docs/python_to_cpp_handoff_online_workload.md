@@ -178,6 +178,32 @@ C++ 当前不会复用运行态 packet 对象，而是：
 
 所以同一个 `.bz2` 可被多次安全引用。
 
+#### Shared-prefix sidecar
+
+在线 group `.bz2` 仍保持标准 netrace 格式。共享 fanout 元数据放在同目录的 `group_<id>.json` sidecar 中，每个 packet 可带 `shared_key` 字段：
+
+- `shared_key = -1` 表示不共享
+- `shared_key >= 0` 表示属于该 group template 内的一个共享组
+
+`shared_key` 的作用域只限于一个 `group_id` / 一个 `.bz2` 模板。同一个 `.bz2` 被多个 input 或 batch 重复引用时，C++ 会为每次 phase 创建新的运行态 packet；这些运行实例只是重复使用模板内的局部 key，不会把不同 group/template 之间的 key 混在一起。
+
+`--online-share-prefix` 是通信共享策略：
+
+- `0`: 关闭共享，保持旧行为
+- `1`: leader-collapse 近似，只注入共享组 leader，followers 在 leader 完成时逻辑完成
+- `2`: boundary fanout，先共享 `src -> dst chiplet boundary`，到目标芯粒边界后再展开到各真实 dst
+
+当 `--online-share-prefix` 为 `1` 或 `2` 时，Python 只有在以下字段都一致时才分配同一个 key：
+
+- `src_tier`
+- `dst_tier`
+- `src_physical`
+- `src_layer`
+- `dst_layer`
+- `channel_range`
+
+并且候选组必须包含至少两个不同的 `dst_physical`，且 `total_data_volume` 完全相同。这个规则对齐 chiplet 通信能耗里的 source-prefix sharing 逻辑。
+
 ---
 
 ### 2.3 `.ini`

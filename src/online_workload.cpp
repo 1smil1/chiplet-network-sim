@@ -7,6 +7,7 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <unordered_map>
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -94,6 +95,7 @@ bool OnlineWorkloadScheduler::LoadFromLegacyJson(const ptree& root, std::string*
   num_resources_ = root.get<int>("num_resources");
   current_cycle_ = 0;
   next_run_id_ = 0;
+  next_fanout_id_ = 0;
   resource_release_cycle_.assign(std::max(0, num_resources_), 0);
   resource_owner_phase_.assign(std::max(0, num_resources_), -1);
   phase_id_to_index_.clear();
@@ -103,6 +105,7 @@ bool OnlineWorkloadScheduler::LoadFromLegacyJson(const ptree& root, std::string*
   phases_.clear();
   group_templates_.clear();
   group_runs_.clear();
+  pending_fanouts_.clear();
   inputs_.assign(std::max(0, num_inputs_), OnlineInputSummary());
   for (int i = 0; i < num_inputs_; ++i) {
     inputs_[i].input_id = i;
@@ -115,6 +118,7 @@ bool OnlineWorkloadScheduler::LoadFromLegacyJson(const ptree& root, std::string*
     packet.src_node = item.second.get<int>("src_node");
     packet.dst_node = item.second.get<int>("dst_node");
     packet.size_bytes = item.second.get<int>("size_bytes");
+    packet.shared_key = item.second.get<int>("shared_key", -1);
     legacy_packets.push_back(packet);
   }
 
@@ -130,6 +134,7 @@ bool OnlineWorkloadScheduler::LoadFromLegacyJson(const ptree& root, std::string*
     OnlineGroupTemplate group;
     group.group_id = task_id;
     group.bz2_path = "legacy_json_inline";
+    group.shared_prefix_policy = 0;
     for (int i = packet_begin; i < packet_end; ++i) {
       group.packets.push_back(legacy_packets[i]);
     }
@@ -177,6 +182,7 @@ bool OnlineWorkloadScheduler::LoadGroupTemplate(int group_id,
   OnlineGroupTemplate group;
   group.group_id = group_id;
   group.bz2_path = bz2_path;
+  group.shared_prefix_policy = 0;
   nt_packet_t* packet = NULL;
   while ((packet = nt_read_packet(&ctx)) != NULL) {
     OnlinePacketTemplate templ;
@@ -184,16 +190,39 @@ bool OnlineWorkloadScheduler::LoadGroupTemplate(int group_id,
     templ.src_node = static_cast<int>(packet->src);
     templ.dst_node = static_cast<int>(packet->dst);
     templ.size_bytes = nt_get_packet_size(packet);
-    // DEBUG: print raw values read from .bz2
-    if (group.packets.size() < 10) {
-      printf("[LOAD_BZ2] group=%d pkt=%zu: raw src=%u dst=%u size=%d (type=%d addr=%u)\n",
-             group_id, group.packets.size(), (unsigned)packet->src, (unsigned)packet->dst,
-             templ.size_bytes, (int)packet->type, packet->addr);
-    }
     group.packets.push_back(templ);
     nt_packet_free(packet);
   }
   nt_close_trfile(&ctx);
+
+  const std::string sidecar_path = ReplaceExtension(bz2_path, ".json");
+  try {
+    ptree sidecar;
+    read_json(sidecar_path, sidecar);
+    group.shared_prefix_policy =
+        sidecar.get<int>("metadata.shared_prefix_policy", 0);
+    if (group.shared_prefix_policy < 0 || group.shared_prefix_policy > 2) {
+      group.shared_prefix_policy = 0;
+    }
+    std::unordered_map<int, int> shared_by_id;
+    for (const auto& item : sidecar.get_child("packets")) {
+      const int packet_id = item.second.get<int>("id");
+      const int shared_key = item.second.get<int>("shared_key", -1);
+      shared_by_id[packet_id] = shared_key;
+    }
+    for (size_t i = 0; i < group.packets.size(); ++i) {
+      std::unordered_map<int, int>::const_iterator it =
+          shared_by_id.find(group.packets[i].packet_id);
+      if (it != shared_by_id.end()) {
+        group.packets[i].shared_key = it->second;
+      }
+    }
+  } catch (const std::exception&) {
+    group.shared_prefix_policy = 0;
+    for (size_t i = 0; i < group.packets.size(); ++i) {
+      group.packets[i].shared_key = -1;
+    }
+  }
 
   if (group.packets.empty()) {
     if (error) *error = "Group template has no packets: " + bz2_path;
@@ -212,6 +241,7 @@ bool OnlineWorkloadScheduler::LoadFromManifest(const ptree& root,
   num_resources_ = root.get<int>("num_resources");
   current_cycle_ = 0;
   next_run_id_ = 0;
+  next_fanout_id_ = 0;
   resource_release_cycle_.assign(std::max(0, num_resources_), 0);
   resource_owner_phase_.assign(std::max(0, num_resources_), -1);
   phase_id_to_index_.clear();
@@ -221,9 +251,18 @@ bool OnlineWorkloadScheduler::LoadFromManifest(const ptree& root,
   phases_.clear();
   group_templates_.clear();
   group_runs_.clear();
+  pending_fanouts_.clear();
+  nonuniform_chiplets_.clear();
+  use_nonuniform_tier_grid_ = false;
   inputs_.assign(std::max(0, num_inputs_), OnlineInputSummary());
   for (int i = 0; i < num_inputs_; ++i) {
     inputs_[i].input_id = i;
+  }
+
+  if (param != NULL && !param->nonuniform_tier_grid_file.empty()) {
+    if (!LoadNonuniformTierGrid(param->nonuniform_tier_grid_file, error)) {
+      return false;
+    }
   }
 
   const std::string manifest_dir = ParentDir(workload_file);
@@ -261,6 +300,49 @@ bool OnlineWorkloadScheduler::LoadFromManifest(const ptree& root,
   }
 
   return Validate(error);
+}
+
+bool OnlineWorkloadScheduler::LoadNonuniformTierGrid(const std::string& path,
+                                                     std::string* error) {
+  try {
+    ptree root;
+    read_json(path, root);
+    const bool enabled = root.get<bool>("enabled", false);
+    if (!enabled) {
+      return true;
+    }
+    nonuniform_chiplets_.clear();
+    for (const auto& item : root.get_child("chiplets")) {
+      const int chip_id = std::stoi(item.first);
+      OnlineChipletGrid grid;
+      grid.chip_id = chip_id;
+      grid.tier_id = item.second.get<int>("tier_id", -1);
+      grid.chip_x = item.second.get<int>("chip_x");
+      grid.chip_y = item.second.get<int>("chip_y");
+      std::vector<int> dims;
+      for (const auto& dim_item : item.second.get_child("grid")) {
+        dims.push_back(dim_item.second.get_value<int>());
+      }
+      if (dims.size() < 2 || dims[0] <= 0 || dims[1] <= 0) {
+        if (error) *error = "Invalid nonuniform tier grid dimensions";
+        return false;
+      }
+      grid.grid_x = dims[0];
+      grid.grid_y = dims[1];
+      nonuniform_chiplets_[chip_id] = grid;
+    }
+    use_nonuniform_tier_grid_ = !nonuniform_chiplets_.empty();
+    if (param->online_debug && use_nonuniform_tier_grid_) {
+      std::cerr << "[ONLINE WORKLOAD] Loaded nonuniform tier grid: "
+                << nonuniform_chiplets_.size() << " chiplets from " << path << std::endl;
+    }
+    return true;
+  } catch (const std::exception& ex) {
+    if (error) {
+      *error = std::string("Failed to load nonuniform tier grid: ") + ex.what();
+    }
+    return false;
+  }
 }
 
 bool OnlineWorkloadScheduler::LoadFromFile(const std::string& workload_file,
@@ -395,9 +477,133 @@ void OnlineWorkloadScheduler::MarkPhaseDone(OnlinePhaseState& phase_state) {
   }
 }
 
+NodeID OnlineWorkloadScheduler::ComputeDestinationBoundary(NodeID src, NodeID dst) const {
+  if (src.chip_id == dst.chip_id) {
+    return dst;
+  }
+
+  NodeID nonuniform_boundary;
+  if (ComputeNonuniformDestinationBoundary(src, dst, &nonuniform_boundary)) {
+    return nonuniform_boundary;
+  }
+
+  const int k_node = param->params_ptree.get<int>("Network.k_node", 4);
+  const int chip_w = param->params_ptree.get<int>(
+      "Network.chip_w",
+      param->params_ptree.get<int>("Network.k_chip", 2));
+
+  const int src_chip_x = src.chip_id % chip_w;
+  const int src_chip_y = src.chip_id / chip_w;
+  const int dst_chip_x = dst.chip_id % chip_w;
+  const int dst_chip_y = dst.chip_id / chip_w;
+
+  const int src_local_y = src.node_id / k_node;
+  const int dst_local_x = dst.node_id % k_node;
+
+  if (src_chip_y == dst_chip_y && src_chip_x != dst_chip_x) {
+    const int boundary_x = (dst_chip_x > src_chip_x) ? 0 : (k_node - 1);
+    const int boundary_y = src_local_y;
+    return NodeID(boundary_y * k_node + boundary_x, dst.chip_id);
+  }
+
+  const int boundary_x = dst_local_x;
+  const int boundary_y = (dst_chip_y > src_chip_y) ? 0 : (k_node - 1);
+  return NodeID(boundary_y * k_node + boundary_x, dst.chip_id);
+}
+
+bool OnlineWorkloadScheduler::ComputeNonuniformDestinationBoundary(
+    NodeID src, NodeID dst, NodeID* boundary) const {
+  if (!use_nonuniform_tier_grid_ || boundary == NULL || src.chip_id == dst.chip_id) {
+    return false;
+  }
+
+  std::unordered_map<int, OnlineChipletGrid>::const_iterator src_it =
+      nonuniform_chiplets_.find(src.chip_id);
+  std::unordered_map<int, OnlineChipletGrid>::const_iterator dst_it =
+      nonuniform_chiplets_.find(dst.chip_id);
+  if (src_it == nonuniform_chiplets_.end() || dst_it == nonuniform_chiplets_.end()) {
+    return false;
+  }
+
+  const int k_node = param->params_ptree.get<int>("Network.k_node", 4);
+  if (k_node <= 0) {
+    return false;
+  }
+  const OnlineChipletGrid& src_grid = src_it->second;
+  const OnlineChipletGrid& dst_grid = dst_it->second;
+  if (dst_grid.grid_x <= 0 || dst_grid.grid_y <= 0 ||
+      dst_grid.grid_x > k_node || dst_grid.grid_y > k_node) {
+    return false;
+  }
+
+  const int src_local_y = src.node_id / src_grid.grid_x;
+  const int dst_local_x = dst.node_id % dst_grid.grid_x;
+  int boundary_x = 0;
+  int boundary_y = 0;
+
+  if (src_grid.chip_y == dst_grid.chip_y && src_grid.chip_x != dst_grid.chip_x) {
+    boundary_x = (dst_grid.chip_x > src_grid.chip_x) ? 0 : (dst_grid.grid_x - 1);
+    boundary_y = std::max(0, std::min(src_local_y, dst_grid.grid_y - 1));
+  } else {
+    boundary_x = std::max(0, std::min(dst_local_x, dst_grid.grid_x - 1));
+    boundary_y = (dst_grid.chip_y > src_grid.chip_y) ? 0 : (dst_grid.grid_y - 1);
+  }
+
+  *boundary = NodeID(boundary_y * dst_grid.grid_x + boundary_x, dst.chip_id);
+  return true;
+}
+
+void OnlineWorkloadScheduler::InjectBoundaryFanout(const Packet& prefix_packet,
+                                                   std::vector<Packet*>& packets,
+                                                   uint64_t finish_cycle) {
+  std::unordered_map<int, OnlinePendingFanout>::iterator fanout_it =
+      pending_fanouts_.find(prefix_packet.shared_fanout_id_);
+  if (fanout_it == pending_fanouts_.end()) {
+    return;
+  }
+
+  OnlinePendingFanout pending = fanout_it->second;
+  pending_fanouts_.erase(fanout_it);
+
+  std::unordered_map<int, int>::iterator run_it = run_id_to_index_.find(pending.run_id);
+  if (run_it == run_id_to_index_.end()) {
+    return;
+  }
+  OnlineGroupRunSummary& run_state = group_runs_[run_it->second];
+  const NodeID boundary = prefix_packet.destination_;
+  int immediate_completions = 0;
+
+  for (size_t i = 0; i < pending.packets.size(); ++i) {
+    const OnlinePacketTemplate& templ = pending.packets[i];
+    const NodeID dst_nid = network->id2nodeid(templ.dst_node);
+    if (dst_nid == boundary) {
+      ++immediate_completions;
+      continue;
+    }
+
+    Packet* packet = new Packet(boundary, dst_nid, BytesToFlits(templ.size_bytes));
+    packet->process_timer_ = 0;
+    packet->input_id_ = pending.input_id;
+    packet->phase_id_ = pending.phase_id;
+    packet->task_id_ = pending.run_id;
+    packet->template_packet_id_ = templ.packet_id;
+    packets.push_back(packet);
+    TM->all_message_num_++;
+  }
+
+  if (immediate_completions > 0 && run_state.remaining_packet_count > 0) {
+    run_state.remaining_packet_count =
+        std::max(0, run_state.remaining_packet_count - immediate_completions);
+  }
+  if (run_state.remaining_packet_count == 0) {
+    OnGroupRunDone(run_state, finish_cycle);
+  }
+}
+
 void OnlineWorkloadScheduler::ProcessFinishedPackets(std::vector<Packet*>& packets) {
   const uint64_t finish_cycle = current_cycle_ == 0 ? 0 : current_cycle_ - 1;
-  for (size_t i = 0; i < packets.size(); ++i) {
+  const size_t packet_count_at_start = packets.size();
+  for (size_t i = 0; i < packet_count_at_start; ++i) {
     Packet* packet = packets[i];
     if (!packet->finished_ || packet->completion_recorded_) {
       continue;
@@ -410,9 +616,15 @@ void OnlineWorkloadScheduler::ProcessFinishedPackets(std::vector<Packet*>& packe
     if (run_it == run_id_to_index_.end()) {
       continue;
     }
+    if (packet->shared_fanout_id_ >= 0) {
+      InjectBoundaryFanout(*packet, packets, finish_cycle);
+      continue;
+    }
     OnlineGroupRunSummary& run_state = group_runs_[run_it->second];
+    const int logical_completions = 1 + std::max(0, packet->shared_follower_count_);
     if (run_state.remaining_packet_count > 0) {
-      --run_state.remaining_packet_count;
+      run_state.remaining_packet_count =
+          std::max(0, run_state.remaining_packet_count - logical_completions);
     }
     if (run_state.remaining_packet_count == 0) {
       OnGroupRunDone(run_state, finish_cycle);
@@ -511,6 +723,57 @@ int OnlineWorkloadScheduler::InjectReadyPackets(std::vector<Packet*>& packets) {
     }
 
     const OnlineGroupTemplate& group_template = group_templates_[group_id_to_index_.at(phase_state.def.group_id)];
+    const int shared_prefix_policy = group_template.shared_prefix_policy;
+    std::unordered_map<int, int> shared_leader_index;
+    std::unordered_map<int, int> shared_follower_count;
+    std::unordered_map<int, std::vector<int> > shared_members;
+    for (size_t j = 0; j < group_template.packets.size(); ++j) {
+      const OnlinePacketTemplate& templ = group_template.packets[j];
+      if (shared_prefix_policy == 0 || templ.shared_key < 0) {
+        continue;
+      }
+      if (shared_leader_index.find(templ.shared_key) == shared_leader_index.end()) {
+        shared_leader_index[templ.shared_key] = static_cast<int>(j);
+      } else {
+        shared_follower_count[templ.shared_key]++;
+      }
+      shared_members[templ.shared_key].push_back(static_cast<int>(j));
+    }
+
+    int physical_packet_count = 0;
+    int boundary_fanout_packet_count = 0;
+    int shared_follower_total = 0;
+    for (size_t j = 0; j < group_template.packets.size(); ++j) {
+      const OnlinePacketTemplate& templ = group_template.packets[j];
+      if (shared_prefix_policy == 1 &&
+          templ.shared_key >= 0 &&
+          shared_leader_index[templ.shared_key] != static_cast<int>(j)) {
+        continue;
+      }
+      if (shared_prefix_policy == 2 &&
+          templ.shared_key >= 0 &&
+          shared_leader_index[templ.shared_key] != static_cast<int>(j)) {
+        continue;
+      }
+      ++physical_packet_count;
+      if (shared_prefix_policy == 2 && templ.shared_key >= 0) {
+        const NodeID src_nid = network->id2nodeid(templ.src_node);
+        const NodeID boundary = ComputeDestinationBoundary(src_nid, network->id2nodeid(templ.dst_node));
+        const std::vector<int>& members = shared_members[templ.shared_key];
+        for (size_t m = 0; m < members.size(); ++m) {
+          const OnlinePacketTemplate& member = group_template.packets[members[m]];
+          if (network->id2nodeid(member.dst_node) != boundary) {
+            ++physical_packet_count;
+            ++boundary_fanout_packet_count;
+          }
+        }
+      }
+    }
+    for (std::unordered_map<int, int>::const_iterator it = shared_follower_count.begin();
+         it != shared_follower_count.end(); ++it) {
+      shared_follower_total += it->second;
+    }
+
     OnlineGroupRunSummary run_state;
     run_state.run_id = next_run_id_++;
     run_state.group_id = group_template.group_id;
@@ -520,6 +783,9 @@ int OnlineWorkloadScheduler::InjectReadyPackets(std::vector<Packet*>& packets) {
     run_state.inject_cycle = current_cycle_;
     run_state.packet_count = static_cast<int>(group_template.packets.size());
     run_state.remaining_packet_count = run_state.packet_count;
+    run_state.physical_packet_count = physical_packet_count;
+    run_state.shared_follower_count = shared_follower_total;
+    run_state.boundary_fanout_packet_count = boundary_fanout_packet_count;
     phase_state.run_id = run_state.run_id;
     run_id_to_index_[run_state.run_id] = static_cast<int>(group_runs_.size());
     group_runs_.push_back(run_state);
@@ -534,14 +800,32 @@ int OnlineWorkloadScheduler::InjectReadyPackets(std::vector<Packet*>& packets) {
 
     for (size_t j = 0; j < group_template.packets.size(); ++j) {
       const OnlinePacketTemplate& templ = group_template.packets[j];
+      if (shared_prefix_policy == 1 &&
+          templ.shared_key >= 0 &&
+          shared_leader_index[templ.shared_key] != static_cast<int>(j)) {
+        continue;
+      }
+      if (shared_prefix_policy == 2 &&
+          templ.shared_key >= 0 &&
+          shared_leader_index[templ.shared_key] != static_cast<int>(j)) {
+        continue;
+      }
       NodeID src_nid = network->id2nodeid(templ.src_node);
       NodeID dst_nid = network->id2nodeid(templ.dst_node);
-      // DEBUG: print id2nodeid conversion for first packets of each phase
-      if (j < 5 || phase_state.def.phase_id == 0) {
-        printf("[INJECT_PKT] phase=%d pkt=%zu: templ_src=%d -> nid=(%d:%d), templ_dst=%d -> nid=(%d:%d)\n",
-               phase_state.def.phase_id, (int)j,
-               templ.src_node, src_nid.node_id, src_nid.chip_id,
-               templ.dst_node, dst_nid.node_id, dst_nid.chip_id);
+      int fanout_id = -1;
+      if (shared_prefix_policy == 2 && templ.shared_key >= 0) {
+        dst_nid = ComputeDestinationBoundary(src_nid, dst_nid);
+        OnlinePendingFanout pending;
+        pending.fanout_id = next_fanout_id_++;
+        pending.run_id = run_state.run_id;
+        pending.input_id = phase_state.def.input_id;
+        pending.phase_id = phase_state.def.phase_id;
+        const std::vector<int>& members = shared_members[templ.shared_key];
+        for (size_t m = 0; m < members.size(); ++m) {
+          pending.packets.push_back(group_template.packets[members[m]]);
+        }
+        fanout_id = pending.fanout_id;
+        pending_fanouts_[fanout_id] = pending;
       }
       Packet* packet =
           new Packet(src_nid, dst_nid, BytesToFlits(templ.size_bytes));
@@ -549,6 +833,9 @@ int OnlineWorkloadScheduler::InjectReadyPackets(std::vector<Packet*>& packets) {
       packet->phase_id_ = phase_state.def.phase_id;
       packet->task_id_ = run_state.run_id;
       packet->template_packet_id_ = templ.packet_id;
+      packet->shared_follower_count_ =
+          (shared_prefix_policy == 1 && templ.shared_key >= 0) ? shared_follower_count[templ.shared_key] : 0;
+      packet->shared_fanout_id_ = fanout_id;
       packets.push_back(packet);
       TM->all_message_num_++;
       ++injected;
@@ -756,6 +1043,9 @@ bool OnlineWorkloadScheduler::WriteResultsJson(const std::string& json_path, std
         entry.put("finish_cycle", run.finish_cycle);
       }
       entry.put("packet_count", run.packet_count);
+      entry.put("physical_packet_count", run.physical_packet_count);
+      entry.put("shared_follower_count", run.shared_follower_count);
+      entry.put("boundary_fanout_packet_count", run.boundary_fanout_packet_count);
       groups_node.push_back(std::make_pair("", entry));
     }
     root.add_child("groups", groups_node);
