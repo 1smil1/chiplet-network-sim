@@ -92,10 +92,11 @@ struct OnlinePendingFanout {
 struct OnlineChipletGrid {
   int chip_id = -1;
   int tier_id = -1;
-  int chip_x = 0;
-  int chip_y = 0;
+  int origin_x = 0;
+  int origin_y = 0;
   int grid_x = 0;
   int grid_y = 0;
+  int node_id_base = 0;
 };
 
 class OnlineWorkloadScheduler {

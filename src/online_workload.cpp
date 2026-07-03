@@ -317,13 +317,22 @@ bool OnlineWorkloadScheduler::LoadNonuniformTierGrid(const std::string& path,
       OnlineChipletGrid grid;
       grid.chip_id = chip_id;
       grid.tier_id = item.second.get<int>("tier_id", -1);
-      grid.chip_x = item.second.get<int>("chip_x");
-      grid.chip_y = item.second.get<int>("chip_y");
+      grid.node_id_base = item.second.get<int>("node_id_base");
+      std::vector<int> origin;
+      for (const auto& origin_item : item.second.get_child("origin")) {
+        origin.push_back(origin_item.second.get_value<int>());
+      }
+      if (origin.size() < 2) {
+        if (error) *error = "Invalid nonuniform tier origin";
+        return false;
+      }
+      grid.origin_x = origin[0];
+      grid.origin_y = origin[1];
       std::vector<int> dims;
       for (const auto& dim_item : item.second.get_child("grid")) {
         dims.push_back(dim_item.second.get_value<int>());
       }
-      if (dims.size() < 2 || dims[0] <= 0 || dims[1] <= 0) {
+      if (dims.size() < 2 || dims[0] <= 0 || dims[1] <= 0 || grid.node_id_base < 0) {
         if (error) *error = "Invalid nonuniform tier grid dimensions";
         return false;
       }
@@ -525,28 +534,36 @@ bool OnlineWorkloadScheduler::ComputeNonuniformDestinationBoundary(
     return false;
   }
 
-  const int k_node = param->params_ptree.get<int>("Network.k_node", 4);
-  if (k_node <= 0) {
-    return false;
-  }
   const OnlineChipletGrid& src_grid = src_it->second;
   const OnlineChipletGrid& dst_grid = dst_it->second;
-  if (dst_grid.grid_x <= 0 || dst_grid.grid_y <= 0 ||
-      dst_grid.grid_x > k_node || dst_grid.grid_y > k_node) {
+  if (src_grid.grid_x <= 0 || src_grid.grid_y <= 0 ||
+      dst_grid.grid_x <= 0 || dst_grid.grid_y <= 0) {
     return false;
   }
 
+  const int src_local_x = src.node_id % src_grid.grid_x;
   const int src_local_y = src.node_id / src_grid.grid_x;
   const int dst_local_x = dst.node_id % dst_grid.grid_x;
+  const int dst_local_y = dst.node_id / dst_grid.grid_x;
+  const int src_global_x = src_grid.origin_x + src_local_x;
+  const int src_global_y = src_grid.origin_y + src_local_y;
+  const int dst_global_x = dst_grid.origin_x + dst_local_x;
+  const int dst_global_y = dst_grid.origin_y + dst_local_y;
   int boundary_x = 0;
   int boundary_y = 0;
 
-  if (src_grid.chip_y == dst_grid.chip_y && src_grid.chip_x != dst_grid.chip_x) {
-    boundary_x = (dst_grid.chip_x > src_grid.chip_x) ? 0 : (dst_grid.grid_x - 1);
-    boundary_y = std::max(0, std::min(src_local_y, dst_grid.grid_y - 1));
+  if (std::abs(dst_global_x - src_global_x) >= std::abs(dst_global_y - src_global_y)) {
+    boundary_x = (dst_global_x >= src_global_x) ? 0 : (dst_grid.grid_x - 1);
+    const int aligned_global_y = std::max(
+        dst_grid.origin_y,
+        std::min(src_global_y, dst_grid.origin_y + dst_grid.grid_y - 1));
+    boundary_y = aligned_global_y - dst_grid.origin_y;
   } else {
-    boundary_x = std::max(0, std::min(dst_local_x, dst_grid.grid_x - 1));
-    boundary_y = (dst_grid.chip_y > src_grid.chip_y) ? 0 : (dst_grid.grid_y - 1);
+    const int aligned_global_x = std::max(
+        dst_grid.origin_x,
+        std::min(src_global_x, dst_grid.origin_x + dst_grid.grid_x - 1));
+    boundary_x = aligned_global_x - dst_grid.origin_x;
+    boundary_y = (dst_global_y >= src_global_y) ? 0 : (dst_grid.grid_y - 1);
   }
 
   *boundary = NodeID(boundary_y * dst_grid.grid_x + boundary_x, dst.chip_id);
