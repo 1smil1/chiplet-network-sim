@@ -266,6 +266,14 @@ bool OnlineWorkloadScheduler::LoadFromManifest(const ptree& root,
   }
 
   const std::string manifest_dir = ParentDir(workload_file);
+  auto catalog_path = root.get_optional<std::string>("endpoint_mapping_catalog");
+  if (catalog_path) {
+    ptree catalog;
+    boost::property_tree::read_json(JoinPath(manifest_dir, *catalog_path), catalog);
+    reuse_.Load(catalog, num_resources_, num_network_nodes_);
+    if ((reuse_.resolve_mode == 1) != !param->position_file.empty())
+      throw std::runtime_error("Catalog resolve mode disagrees with Network.position_file");
+  }
   for (const auto& item : root.get_child("template_groups")) {
     const int group_id = item.second.get<int>("group_id");
     const std::string rel_path = item.second.get<std::string>("bz2_path");
@@ -404,8 +412,9 @@ bool OnlineWorkloadScheduler::Validate(std::string* error) const {
     const OnlineGroupTemplate& group = group_templates_[i];
     for (size_t j = 0; j < group.packets.size(); ++j) {
       const OnlinePacketTemplate& packet = group.packets[j];
-      if (packet.src_node < 0 || packet.src_node >= num_network_nodes_ ||
-          packet.dst_node < 0 || packet.dst_node >= num_network_nodes_) {
+      if (reuse_.enabled ? (!reuse_.virtual_layer.count(packet.src_node) || !reuse_.virtual_layer.count(packet.dst_node)) :
+          (packet.src_node < 0 || packet.src_node >= num_network_nodes_ ||
+          packet.dst_node < 0 || packet.dst_node >= num_network_nodes_)) {
         if (error) *error = "Packet node id out of range";
         return false;
       }
@@ -672,14 +681,62 @@ uint64_t OnlineWorkloadScheduler::EarliestResourceReadyCycle(const OnlinePhaseSt
   return earliest;
 }
 
+void OnlineWorkloadScheduler::BindDynamicBlock(int input_id, int layer_id) {
+  reuse_.Bind(input_id, layer_id, current_cycle_, [this, input_id, layer_id](const std::vector<int>& bank) {
+    uint64_t ready = current_cycle_, load = 0, queued = 0;
+    const auto& candidates = reuse_.layers.at(layer_id).candidates;
+    int candidate_pool = static_cast<int>(std::find(candidates.begin(), candidates.end(), bank) - candidates.begin());
+    for (int resource : bank) {
+      int owner = resource_owner_phase_.at(resource);
+      if (owner >= 0) ready = std::max(ready, phases_.at(phase_id_to_index_.at(owner)).compute_end_cycle);
+    }
+    // Only already-ready, older mapped work can delay this request. Future
+    // communication readiness is deliberately not predicted by scheduler 0.
+    for (const auto& phase : phases_) {
+      if ((phase.status != OnlinePhaseStatus::waiting && phase.status != OnlinePhaseStatus::computing) ||
+          !reuse_.IsDynamic(phase.def.layer_id)) continue;
+      const auto& layer = reuse_.layers.at(phase.def.layer_id);
+      auto binding = reuse_.bindings.find(std::make_pair(phase.def.input_id, layer.block));
+      if (binding == reuse_.bindings.end() || binding->second.pool != candidate_pool) continue;
+      queued += phase.status == OnlinePhaseStatus::computing ? phase.compute_end_cycle - current_cycle_ : phase.def.compute_latency_cycles;
+      if (phase.status != OnlinePhaseStatus::waiting) continue;
+      const auto& occupied = reuse_.Resources(phase.def.input_id, phase.def.layer_id);
+      bool intersects = false;
+      for (int p : bank) if (std::find(occupied.begin(), occupied.end(), p) != occupied.end()) intersects = true;
+      if (intersects) {
+        if (phase.dep_remaining == 0 && phase.def.input_id <= input_id) load += phase.def.compute_latency_cycles;
+      }
+    }
+    return std::make_pair(ready + load, queued);
+  });
+}
+
 void OnlineWorkloadScheduler::StartNewComputePhases() {
-  for (size_t i = 0; i < phases_.size(); ++i) {
+  std::vector<size_t> order;
+  for (size_t i = 0; i < phases_.size(); ++i) order.push_back(i);
+  if (reuse_.enabled && reuse_.dynamic) {
+    // Reorder only dynamic slots: static phase visitation remains unchanged.
+    std::vector<size_t> slots, dynamic;
+    for (size_t i = 0; i < order.size(); ++i) if (reuse_.IsDynamic(phases_[i].def.layer_id)) {
+      slots.push_back(i); dynamic.push_back(i);
+    }
+    std::stable_sort(dynamic.begin(), dynamic.end(), [this](size_t a, size_t b) {
+      return std::make_pair(phases_[a].def.input_id, phases_[a].def.layer_id) <
+             std::make_pair(phases_[b].def.input_id, phases_[b].def.layer_id);
+    });
+    for (size_t i = 0; i < slots.size(); ++i) order[slots[i]] = dynamic[i];
+  }
+  for (size_t i : order) {
     OnlinePhaseState& phase_state = phases_[i];
     if (phase_state.status != OnlinePhaseStatus::waiting) {
       continue;
     }
     if (phase_state.dep_remaining != 0) {
       continue;
+    }
+    if (reuse_.IsDynamic(phase_state.def.layer_id)) {
+      BindDynamicBlock(phase_state.def.input_id, phase_state.def.layer_id);
+      phase_state.def.resource_ids = reuse_.Resources(phase_state.def.input_id, phase_state.def.layer_id);
     }
     if (!ResourcesAvailable(phase_state)) {
       continue;
@@ -739,7 +796,48 @@ int OnlineWorkloadScheduler::InjectReadyPackets(std::vector<Packet*>& packets) {
       input_summary.first_injection_cycle = current_cycle_;
     }
 
-    const OnlineGroupTemplate& group_template = group_templates_[group_id_to_index_.at(phase_state.def.group_id)];
+    OnlineGroupTemplate resolved;
+    const OnlineGroupTemplate& original = group_templates_[group_id_to_index_.at(phase_state.def.group_id)];
+    if (reuse_.enabled) {
+      resolved = original;
+      resolved.packets.clear();
+      for (const auto& source : original.packets) {
+        BindDynamicBlock(phase_state.def.input_id, reuse_.virtual_layer.at(source.src_node));
+        BindDynamicBlock(phase_state.def.input_id, reuse_.virtual_layer.at(source.dst_node));
+        OnlinePacketTemplate packet = source;
+        packet.src_node = reuse_.Endpoint(phase_state.def.input_id, source.src_node);
+        packet.dst_node = reuse_.Endpoint(phase_state.def.input_id, source.dst_node);
+        if (packet.src_node != packet.dst_node) resolved.packets.push_back(packet);
+      }
+      // Repartition prefix groups at the actual destination boundary. The
+      // template's virtual sharing relation alone does not imply shared routes.
+      std::map<std::pair<int, int>, int> sharing;
+      for (auto& packet : resolved.packets) if (packet.shared_key >= 0) {
+        NodeID src = network->id2nodeid(packet.src_node), dst = network->id2nodeid(packet.dst_node);
+        if (src.chip_id == dst.chip_id) { packet.shared_key = -1; continue; }
+        auto key = std::make_pair(packet.shared_key, dst.chip_id);
+        if (!sharing.count(key)) sharing[key] = static_cast<int>(sharing.size());
+        packet.shared_key = sharing.at(key);
+      }
+      // Multiple logical destination layers may reuse the same physical bank.
+      // Preserve the legacy physical packet aggregation after resolving them.
+      std::vector<OnlinePacketTemplate> merged;
+      std::map<std::pair<std::pair<int, int>, int>, size_t> packet_index;
+      for (const auto& packet : resolved.packets) {
+        auto key = std::make_pair(std::make_pair(packet.src_node, packet.dst_node), packet.shared_key);
+        if (!packet_index.count(key)) {
+          packet_index[key] = merged.size();
+          merged.push_back(packet);
+        } else {
+          auto& previous = merged.at(packet_index.at(key));
+          if (packet.size_bytes > std::numeric_limits<int>::max() - previous.size_bytes)
+            throw std::runtime_error("Resolved packet size overflow");
+          previous.size_bytes += packet.size_bytes;
+        }
+      }
+      resolved.packets.swap(merged);
+    }
+    const OnlineGroupTemplate& group_template = reuse_.enabled ? resolved : original;
     const int shared_prefix_policy = group_template.shared_prefix_policy;
     std::unordered_map<int, int> shared_leader_index;
     std::unordered_map<int, int> shared_follower_count;
@@ -1016,6 +1114,37 @@ bool OnlineWorkloadScheduler::WriteResultsJson(const std::string& json_path, std
   try {
     ptree root;
     root.put("mode", "online");
+    if (reuse_.enabled) {
+      ptree schedule;
+      for (const auto& phase : phases_) {
+        ptree entry, mappings;
+        const auto& layer = reuse_.layers.at(phase.def.layer_id);
+        entry.put("input_id", phase.def.input_id);
+        entry.put("layer_id", phase.def.layer_id);
+        entry.put("block_id", layer.block);
+        entry.put("phase_id", phase.def.phase_id);
+        entry.put("compute_start_cycle", phase.compute_start_cycle);
+        entry.put("compute_end_cycle", phase.compute_end_cycle);
+        entry.put("comm_end_cycle", phase.comm_end_cycle);
+        uint64_t ready = 0;
+        for (int dep : phase.def.dep_phase_ids) ready = std::max(ready, phases_.at(phase_id_to_index_.at(dep)).comm_end_cycle);
+        entry.put("dependency_ready_cycle", ready);
+        if (reuse_.IsDynamic(phase.def.layer_id)) {
+          const auto& binding = reuse_.bindings.at(std::make_pair(phase.def.input_id, layer.block));
+          entry.put("block_resource_id", binding.pool);
+          entry.put("mapping_cycle", binding.cycle);
+        }
+        for (int v : layer.virtuals) {
+          ptree mapping;
+          mapping.put("virtual_id", v);
+          mapping.put("physical_id", reuse_.Physical(phase.def.input_id, v));
+          mappings.push_back(std::make_pair("", mapping));
+        }
+        entry.add_child("mapping", mappings);
+        schedule.push_back(std::make_pair("", entry));
+      }
+      root.add_child("auto_reuse_schedule", schedule);
+    }
     uint64_t final_cycle = 0;
     for (size_t i = 0; i < phases_.size(); ++i) {
       final_cycle = std::max(final_cycle, phases_[i].comm_end_cycle);
@@ -1088,6 +1217,13 @@ bool OnlineWorkloadScheduler::WriteResultsJson(const std::string& json_path, std
         resources_node.push_back(std::make_pair("", res_entry));
       }
       entry.add_child("resource_ids", resources_node);
+      if (reuse_.enabled) {
+        std::set<int> tiers;
+        for (int p : phase.def.resource_ids) tiers.insert(reuse_.physical_tier.at(p));
+        ptree chiplets;
+        for (int tier : tiers) { ptree value; value.put("", tier); chiplets.push_back(std::make_pair("", value)); }
+        entry.add_child("runtime_chiplets", chiplets);
+      }
       entry.put("compute_latency_cycles", phase.def.compute_latency_cycles);
       entry.put("compute_start_cycle", phase.compute_start_cycle);
       entry.put("compute_end_cycle", phase.compute_end_cycle);

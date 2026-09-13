@@ -8,6 +8,7 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include "packet.h"
+#include "auto_reuse_scheduler.h"
 
 struct OnlinePacketTemplate {
   int packet_id = -1;
@@ -159,4 +160,6 @@ class OnlineWorkloadScheduler {
   std::unordered_map<int, OnlinePendingFanout> pending_fanouts_;
   std::unordered_map<int, OnlineChipletGrid> nonuniform_chiplets_;
   bool use_nonuniform_tier_grid_ = false;
+  AutoReuseScheduler reuse_;
+  void BindDynamicBlock(int input_id, int layer_id);
 };
