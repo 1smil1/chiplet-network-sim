@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "buffer.h"
 
 #include "packet.h"
@@ -58,11 +59,21 @@ bool Buffer::allocate_buffer(int vcb, int n) {
   }
 }
 
+bool Buffer::allocate_packet_buffer(int vcb, int packet_flits) {
+  assert(packet_flits > 0);
+  return allocate_buffer(vcb, std::min(packet_flits, buffer_size_));
+}
+
 void Buffer::release_buffer(int vcb, int n) {
   int buffer = vc_buffer_[vcb].load();
   while (!vc_buffer_[vcb].compare_exchange_weak(buffer, buffer + n))
     ;
   assert(vc_buffer_[vcb].load() <= buffer_size_);
+}
+
+void Buffer::release_packet_buffer(int vcb, int packet_flits) {
+  assert(packet_flits > 0);
+  release_buffer(vcb, std::min(packet_flits, buffer_size_));
 }
 
 bool Buffer::allocate_in_link(Packet& p) {

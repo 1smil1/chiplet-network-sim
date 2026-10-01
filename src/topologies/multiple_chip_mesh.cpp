@@ -237,6 +237,55 @@ bool MultiChipMesh::is_active_node(NodeID id) const {
 }
 
 void MultiChipMesh::connect_chiplets() {
+    if (use_nonuniform_grid_) {
+        boost::property_tree::ptree root;
+        boost::property_tree::read_json(param->nonuniform_tier_grid_file, root);
+        const auto& explicit_links = root.get_child("links");
+        {
+            for (const auto& item : explicit_links) {
+                const auto& row = item.second;
+                int src_chip = row.get<int>("src_chiplet");
+                int dst_chip = row.get<int>("dst_chiplet");
+                auto local_id = [&](const char* field, int chip_id) {
+                    const auto& values = row.get_child(field);
+                    if (values.size() != 2) throw std::runtime_error("boundary local coordinate requires x,y");
+                    auto it = values.begin();
+                    int x = (it++)->second.get_value<int>();
+                    int y = it->second.get_value<int>();
+                    auto grid = grid_for_chip(chip_id);
+                    if (chip_id < 0 || chip_id >= num_chips_ || x < 0 || y < 0 || x >= grid.grid_x || y >= grid.grid_y)
+                        throw std::runtime_error("boundary endpoint outside chiplet grid");
+                    return NodeID(y * grid.grid_x + x, chip_id);
+                };
+                NodeID src = local_id("src_local", src_chip);
+                NodeID dst = local_id("dst_local", dst_chip);
+                NodeMesh* a = get_node(src);
+                NodeMesh* b = get_node(dst);
+                if (d2d_IF_ != "off_chip_serial" && d2d_IF_ != "off_chip_parallel")
+                    throw std::runtime_error("Unknown d2d interface: " + d2d_IF_);
+                auto channel = d2d_IF_ == "off_chip_serial" ? off_chip_serial_channel : off_chip_parallel_channel;
+                const auto direction = row.get<std::string>("direction");
+                if (direction == "east") {
+                    a->xpos_link_node_ = dst;
+                    a->xpos_link_buffer_ = b->xneg_in_buffer_;
+                    b->xneg_link_node_ = src;
+                    b->xneg_link_buffer_ = a->xpos_in_buffer_;
+                    a->xpos_in_buffer_->channel_ = channel;
+                    b->xneg_in_buffer_->channel_ = channel;
+                } else if (direction == "north") {
+                    a->ypos_link_node_ = dst;
+                    a->ypos_link_buffer_ = b->yneg_in_buffer_;
+                    b->yneg_link_node_ = src;
+                    b->yneg_link_buffer_ = a->ypos_in_buffer_;
+                    a->ypos_in_buffer_->channel_ = channel;
+                    b->yneg_in_buffer_->channel_ = channel;
+                } else {
+                    throw std::runtime_error("unsupported boundary direction: " + direction);
+                }
+            }
+            return;
+        }
+    }
   for (int chip_id = 0; chip_id < num_chips_; ++chip_id) {
     ChipMesh* chip = get_chip(chip_id);
     int chip_x = chip->chip_coordinate_[0];

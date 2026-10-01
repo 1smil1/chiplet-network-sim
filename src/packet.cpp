@@ -16,6 +16,7 @@ Packet::Packet(NodeID source, NodeID destination, int length) {
     next_vc_ = VCInfo();
     switch_allocated_ = false;
     trans_timer_ = 0;
+    source_launch_cycle_ = -1;
     wait_timer_ = 0;
     internal_hops_ = 0;
     parallel_hops_ = 0;

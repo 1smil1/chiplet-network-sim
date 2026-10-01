@@ -1,4 +1,5 @@
 #include <boost/property_tree/json_parser.hpp>
+#include <stdexcept>
 #include "config.h"
 
 // paser parameters from config file
@@ -9,6 +10,13 @@ Parameters::Parameters(const std::string &config_file) {
   topology = params_ptree.get<std::string>("Network.topology", "SingleChipMesh");
   buffer_size = params_ptree.get<int>("Network.buffer_size", 16);
   vc_number = params_ptree.get<int>("Network.vc_number", 1);
+  on_chip_width_flits = params_ptree.get<int>("Network.on_chip_width_flits", 64);
+  off_chip_serial_width_flits = params_ptree.get<int>("Network.off_chip_serial_width_flits", 64);
+  off_chip_serial_latency_cycles = params_ptree.get<int>("Network.off_chip_serial_latency_cycles", 8);
+  if (on_chip_width_flits <= 0 || off_chip_serial_width_flits <= 0 ||
+      off_chip_serial_latency_cycles <= 0) {
+    throw std::invalid_argument("Network channel width and latency must be positive");
+  }
   router_stages = params_ptree.get<std::string>("Network.router_stages", "ThreeStage");
   processing_time = params_ptree.get<int>("Network.processing_time", 2);
 

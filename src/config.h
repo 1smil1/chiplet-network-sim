@@ -46,6 +46,9 @@ struct Parameters {
   std::string topology;
   int buffer_size;  // flits
   int vc_number;
+  int on_chip_width_flits;
+  int off_chip_serial_width_flits;
+  int off_chip_serial_latency_cycles;
   std::string router_stages;
   int processing_time;     // cycles
 

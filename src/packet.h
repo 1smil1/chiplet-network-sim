@@ -26,6 +26,7 @@ class Packet {
   int link_timer_;     // time cost on the link
   int wait_timer_;     // waiting time in one buffer
   int trans_timer_;    // the total time a message consumed
+  int source_launch_cycle_;  // elapsed cycles until the first source link allocation
   int internal_hops_;
   int parallel_hops_;
   int serial_hops_;

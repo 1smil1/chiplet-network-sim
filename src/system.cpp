@@ -91,7 +91,7 @@ void System::vc_allocate(Packet& p) const {
     }
     for (auto& vc : p.candidate_channels_) {
       if (vc.buffer->is_empty(vc.vcb))                        // try to allocate a empty vc
-        if (vc.buffer->allocate_buffer(vc.vcb, p.length_)) {  // packet switching
+        if (vc.buffer->allocate_packet_buffer(vc.vcb, p.length_)) {  // packet switching
           // allocating sucessed
           if (should_debug) printf("[VC_ALLOC] SUCCESS phase=%d allocated empty VC\n", p.phase_id_);
           p.next_vc_ = vc;
@@ -101,7 +101,7 @@ void System::vc_allocate(Packet& p) const {
     }
     // no empty vc, try to allocate a free vc
     for (auto& vc : p.candidate_channels_) {
-      if (vc.buffer->allocate_buffer(vc.vcb, p.length_)) {  // packet switching
+      if (vc.buffer->allocate_packet_buffer(vc.vcb, p.length_)) {  // packet switching
         // allocating sucessed
         if (should_debug) printf("[VC_ALLOC] SUCCESS phase=%d allocated non-empty VC\n", p.phase_id_);
         p.next_vc_ = vc;
@@ -181,9 +181,14 @@ void System::update(Packet& p) {
   int i = 0;
 
   if (p.switch_allocated_) {
+    if (p.head_trace().id == p.source_ && p.source_launch_cycle_ < 0) {
+      p.source_launch_cycle_ = p.trans_timer_;
+    }
     temp1 = p.next_vc_;
     p.wait_timer_ = 0;
-    p.link_timer_ = p.next_vc_.buffer->channel_.latency;
+    p.link_timer_ = p.next_vc_.buffer->channel_ == off_chip_serial_channel
+        ? param->off_chip_serial_latency_cycles
+        : p.next_vc_.buffer->channel_.latency;
     static int sw_success_debug = 0;
     if (param->online_debug && sw_success_debug < 5 &&
         p.phase_id_ >= 0 && p.phase_id_ <= 2) {
@@ -222,7 +227,12 @@ void System::update(Packet& p) {
 
   if (i < p.length_) {  // there is flits fall behind
     temp2 = p.flit_trace_[i];
-    int k = temp1.buffer->channel_.width;  // linkwidth
+    const auto link_width = [](const Channel& channel) {
+      if (channel == on_chip_channel) return param->on_chip_width_flits;
+      if (channel == off_chip_serial_channel) return param->off_chip_serial_width_flits;
+      return channel.width;
+    };
+    int k = link_width(temp1.buffer->channel_);
     int j = 0;
     while (i < p.length_) {
       if (p.flit_trace_[i].id == temp2.id && j < k) {
@@ -233,7 +243,7 @@ void System::update(Packet& p) {
         if (p.flit_trace_[i].id != temp2.id) {
           temp1 = temp2;
           temp2 = p.flit_trace_[i];
-          k = temp1.buffer->channel_.width;
+          k = link_width(temp1.buffer->channel_);
           j = 0;
           assert(p.flit_trace_[i].id != temp1.id);
           p.flit_trace_[i] = temp1;
@@ -249,14 +259,14 @@ void System::update(Packet& p) {
       p.releaselink_ = true;
       p.leaving_vc_ = temp2;
       if (temp2.buffer != nullptr) {
-        temp2.buffer->release_buffer(temp2.vcb, p.length_);
+        temp2.buffer->release_packet_buffer(temp2.vcb, p.length_);
       }
     }
   }
   // If the last flit reach destination, delete message
   if (p.link_timer_ == 0 && p.tail_trace().id == p.destination_) {
     VCInfo dest_vc = p.tail_trace();
-    dest_vc.buffer->release_buffer(dest_vc.vcb, p.length_);
+    dest_vc.buffer->release_packet_buffer(dest_vc.vcb, p.length_);
     p.finished_ = true;
     TM->message_arrived_++;
     TM->total_cycles_ += p.trans_timer_;
@@ -264,6 +274,12 @@ void System::update(Packet& p) {
     TM->total_serial_hops_ += p.serial_hops_;
     TM->total_internal_hops_ += p.internal_hops_;
     TM->total_other_hops_ += p.other_hops_;
+    if (param->online_debug && p.template_packet_id_ >= 0) {
+      printf("[PACKET_RECORD] id=%d src_chip=%d src_node=%d dst_chip=%d dst_node=%d latency=%d source_launch=%d internal_hops=%d serial_hops=%d\n",
+             p.template_packet_id_, p.source_.chip_id, p.source_.node_id,
+             p.destination_.chip_id, p.destination_.node_id, p.trans_timer_,
+             p.source_launch_cycle_, p.internal_hops_, p.serial_hops_);
+    }
 
     // NEW: Update last arrival cycle (thread-safe compare-and-swap)
     uint64_t current_cycle = current_simulation_cycle.load();

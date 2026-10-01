@@ -25,6 +25,8 @@ class Buffer {
 
   bool allocate_buffer(int vcb, int n);  // Return true if there is enough free buffer.
   void release_buffer(int vcb, int n);
+  bool allocate_packet_buffer(int vcb, int packet_flits);
+  void release_packet_buffer(int vcb, int packet_flits);
   bool allocate_in_link(Packet&);
   void release_in_link(Packet&);
   bool allocate_sw_link();

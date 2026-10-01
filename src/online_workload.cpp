@@ -1235,7 +1235,19 @@ bool OnlineWorkloadScheduler::WriteResultsJson(const std::string& json_path, std
     }
     root.add_child("phases", phases_node);
 
-    root.put("message_arrived", TM->message_arrived_.load());
+  root.put("message_arrived", TM->message_arrived_.load());
+  if (param->online_debug) {
+    root.put("message_timeout", TM->message_timeout_.load());
+    root.put("slowest_packet.latency", TM->slowest_packet_latency_.load());
+    root.put("slowest_packet.src", TM->slowest_packet_src_.load());
+    root.put("slowest_packet.dst", TM->slowest_packet_dst_.load());
+    root.put("slowest_packet.length_flits", TM->slowest_packet_length_.load());
+    root.put("slowest_packet.hops", TM->slowest_packet_hops_.load());
+    root.put("hop_summary.internal", TM->total_internal_hops_.load());
+    root.put("hop_summary.parallel", TM->total_parallel_hops_.load());
+    root.put("hop_summary.serial", TM->total_serial_hops_.load());
+    root.put("hop_summary.other", TM->total_other_hops_.load());
+  }
     root.put("average_latency",
              TM->message_arrived_.load() == 0
                  ? 0.0
