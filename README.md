@@ -7,13 +7,17 @@ CNSim is a cycle-accurate, packet-parallel simulator for chiplet networks.
 Run from the project root:
 
 ```bat
-chip\chiplet-network-sim\rebuild_noc_sim_mingw.bat
+rebuild_auto.bat --cnsim
 ```
 
-This reuses `build_mingw`, uses `C:\Strawberry\c\bin\g++.exe`, and produces
-`chip\chiplet-network-sim\build_mingw\ChipletNetworkSim.exe`. Pass that path
-explicitly as `--sim-exe` in DSE communication runs. The old Visual Studio
-`rebuild_noc_sim.bat` entry point was removed to avoid the stale root binary.
+This is the only CNSim Windows build entry. It uses Ninja and Strawberry GCC
+(`C:\Strawberry\c\bin\g++.exe`), incrementally builds Release from current sources
+in `build_mingw`, and copies it to the canonical runtime path
+`chip\chiplet-network-sim\ChipletNetworkSim.exe`, which the main workflow uses.
+Building only a binary under a build directory does not update that runtime copy.
+Standalone `rebuild_noc_sim.bat` and `rebuild_noc_sim_mingw.bat` were removed.
+Do not run binaries from old build directories; the main workflow needs no
+`--sim-exe` override after this build succeeds.
 
 ## Linux build
 
