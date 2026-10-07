@@ -159,15 +159,18 @@ int main(int argc, char* argv[]) {
   }
 
   if (param->traffic == "online_workload") {
+    std::cout << "[CNSim] stage=1/4 topology ready; loading online workload" << std::endl;
     OnlineWorkloadScheduler scheduler;
     std::string load_error;
     if (!scheduler.LoadFromFile(param->workload_file, network->num_cores_, &load_error)) {
       std::cerr << "[ONLINE WORKLOAD] Failed to load workload: " << load_error << std::endl;
       return 1;
     }
+    std::cout << "[CNSim] stage=2/4 workload loaded; scheduler ready" << std::endl;
     std::chrono::steady_clock::time_point progress_last = std::chrono::steady_clock::now();
-    const std::chrono::seconds progress_interval(5);
+    const std::chrono::seconds progress_interval(param->online_debug ? 5 : 10);
 
+    std::cout << "[CNSim] stage=3/4 simulation started; cycle=0 injected=0 arrived=0 pending=0" << std::endl;
     while (!scheduler.AllDone()) {
       scheduler.ProcessFinishedPackets(all_packets);
       scheduler.ReclaimCompletedPackets(all_packets);
@@ -183,32 +186,33 @@ int main(int argc, char* argv[]) {
       }
       const std::chrono::steady_clock::time_point progress_now =
           std::chrono::steady_clock::now();
-      if (param->online_debug && progress_now - progress_last >= progress_interval) {
-        scheduler.PrintProgressSummary(unfinished_packets);
+      if (progress_now - progress_last >= progress_interval) {
+        std::cout << "[CNSim] stage=3/4 progress cycle=" << scheduler.current_cycle()
+                  << " injected=" << TM->all_message_num_.load()
+                  << " arrived=" << TM->message_arrived_.load()
+                  << " pending=" << unfinished_packets << std::endl;
+        if (param->online_debug) scheduler.PrintProgressSummary(unfinished_packets);
         int debug_printed = 0;
-        std::cout << "  [ONLINE PROGRESS] sample_packets:";
-        for (size_t i = 0; i < all_packets.size(); ++i) {
-          Packet* packet = all_packets[i];
-          if (packet->finished_) {
-            continue;
+        if (param->online_debug) {
+          std::cout << "  [ONLINE PROGRESS] sample_packets:";
+          for (size_t i = 0; i < all_packets.size(); ++i) {
+            Packet* packet = all_packets[i];
+            if (packet->finished_) continue;
+            const VCInfo& head = packet->head_trace();
+            std::cout << " {task=" << packet->task_id_
+                      << ", phase=" << packet->phase_id_
+                      << ", src=(" << packet->source_.chip_id << ":" << packet->source_.node_id << ")"
+                      << ", dst=(" << packet->destination_.chip_id << ":" << packet->destination_.node_id << ")"
+                      << ", head=(" << head.id.chip_id << ":" << head.id.node_id << ")"
+                      << ", wait=" << packet->wait_timer_
+                      << ", link=" << packet->link_timer_
+                      << ", proc=" << packet->process_timer_
+                      << ", trans=" << packet->trans_timer_ << "}";
+            ++debug_printed;
+            if (debug_printed >= 4) break;
           }
-          const VCInfo& head = packet->head_trace();
-          std::cout << " {task=" << packet->task_id_
-                    << ", phase=" << packet->phase_id_
-                    << ", src=(" << packet->source_.chip_id << ":" << packet->source_.node_id << ")"
-                    << ", dst=(" << packet->destination_.chip_id << ":" << packet->destination_.node_id << ")"
-                    << ", head=(" << head.id.chip_id << ":" << head.id.node_id << ")"
-                    << ", wait=" << packet->wait_timer_
-                    << ", link=" << packet->link_timer_
-                    << ", proc=" << packet->process_timer_
-                    << ", trans=" << packet->trans_timer_
-                    << "}";
-          ++debug_printed;
-          if (debug_printed >= 4) {
-            break;
-          }
+          std::cout << std::endl;
         }
-        std::cout << std::endl;
         progress_last = progress_now;
       }
 
@@ -229,6 +233,9 @@ int main(int argc, char* argv[]) {
     scheduler.ProcessFinishedPackets(all_packets);
     scheduler.ReclaimCompletedPackets(all_packets);
     scheduler.PrintFinalSummary();
+    std::cout << "[CNSim] stage=4/4 writing results injected=" << TM->all_message_num_.load()
+              << " arrived=" << TM->message_arrived_.load()
+              << " final_cycle=" << scheduler.current_cycle() << std::endl;
     TM->print_statistics();
 
     std::string json_error;
