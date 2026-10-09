@@ -60,8 +60,7 @@ std::map<int, std::pair<int, int>> NodeMesh::load_all_positions(const std::strin
 
   std::ifstream file(position_file);
   if (!file.is_open()) {
-    std::cerr << "Warning: Cannot open position file: " << position_file << std::endl;
-    return positions;
+    throw std::runtime_error("Cannot open position file: " + position_file);
   }
 
   std::string line;
@@ -71,12 +70,27 @@ std::map<int, std::pair<int, int>> NodeMesh::load_all_positions(const std::strin
     if (line.empty() || line[0] == '#') continue;
 
     std::istringstream iss(line);
-    int py_node_id, x, y, py_chip, noc_chip;
+    int py_node_id, x, y, z = 0, py_chip, noc_chip;
     std::string type_str;
     int c_node_id;
 
-    // Parse format: py_node_id x y py_chip noc_chip type c_node_id
-    if (iss >> py_node_id >> x >> y >> py_chip >> noc_chip >> type_str >> c_node_id) {
+    std::vector<std::string> fields;
+    std::string token;
+    while (iss >> token) fields.push_back(token);
+    if (fields.empty()) continue;
+    if (fields.size() != 7 && fields.size() != 8)
+      throw std::runtime_error("Malformed position row: " + position_file + ": " + line);
+    if (fields.size() == 7) fields.insert(fields.begin() + 3, "0");
+    py_node_id = std::stoi(fields[0]); x = std::stoi(fields[1]); y = std::stoi(fields[2]);
+    z = std::stoi(fields[3]); py_chip = std::stoi(fields[4]); noc_chip = std::stoi(fields[5]);
+    type_str = fields[6]; c_node_id = std::stoi(fields[7]);
+    if (z != 0)
+      throw std::runtime_error("CNSim does not support 3D: " + position_file +
+        " node=" + std::to_string(py_node_id) + " z=" + std::to_string(z));
+    if (py_node_id < 0 || x < 0 || y < 0 || c_node_id < 0 ||
+        (type_str != "real" && type_str != "virtual"))
+      throw std::runtime_error("Invalid position row: " + line);
+    {
       // Store py_node_id → (x, y) mapping (for id2nodeid() in Method 2)
       positions[py_node_id] = std::make_pair(x, y);
       loaded_count++;

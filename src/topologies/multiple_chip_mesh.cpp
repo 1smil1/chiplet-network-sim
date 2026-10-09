@@ -84,59 +84,67 @@ void MultiChipMesh::load_nonuniform_tier_grid() {
 
   std::ifstream file(param->nonuniform_tier_grid_file);
   if (!file.good()) {
-    std::cerr << "[MultiChipMesh] Warning: cannot open nonuniform grid file: "
-              << param->nonuniform_tier_grid_file << std::endl;
-    return;
+    throw std::runtime_error("Cannot open nonuniform grid file: " + param->nonuniform_tier_grid_file);
   }
   file.close();
 
   boost::property_tree::ptree root;
   try {
     boost::property_tree::read_json(param->nonuniform_tier_grid_file, root);
-    const bool enabled = root.get<bool>("enabled", root.get<bool>("metadata.enabled", false));
+    const bool enabled = root.get<bool>("enabled");
     if (!enabled) {
-      return;
+      throw std::runtime_error("Required nonuniform grid is disabled");
     }
+    const auto& dimensions = root.get_child("grid_shape");
+    if (dimensions.size() != 2 && dimensions.size() != 3)
+      throw std::runtime_error("Invalid grid_shape dimensions");
+    if (dimensions.size() == 3 && std::next(dimensions.begin(), 2)->second.get_value<int>() != 1)
+      throw std::runtime_error("CNSim does not support 3D: " + param->nonuniform_tier_grid_file);
     for (const auto& item : root.get_child("chiplets")) {
       const int chip_id = std::stoi(item.first);
       ChipletGridInfo grid;
       boost::property_tree::ptree origin_node = item.second.get_child("origin");
+      for (const char* coordinate : {"origin", "chiplet_pos"}) {
+        const auto& values = item.second.get_child(coordinate);
+        if (values.size() != 2 && values.size() != 3)
+          throw std::runtime_error("Invalid chiplet coordinates: " + item.first);
+        if (values.size() == 3 && std::next(values.begin(), 2)->second.get_value<int>() != 0)
+          throw std::runtime_error("CNSim does not support 3D: chiplet=" + item.first);
+      }
       boost::property_tree::ptree::const_iterator origin_it = origin_node.begin();
       if (origin_it == origin_node.end()) {
-        continue;
+        throw std::runtime_error("Missing origin x: chiplet=" + item.first);
       }
       grid.origin_x = origin_it->second.get_value<int>();
       ++origin_it;
       if (origin_it == origin_node.end()) {
-        continue;
+        throw std::runtime_error("Missing origin y: chiplet=" + item.first);
       }
       grid.origin_y = origin_it->second.get_value<int>();
       grid.node_id_base = item.second.get<int>("node_id_base");
       boost::property_tree::ptree grid_node = item.second.get_child("grid");
-      if (grid_node.empty()) {
-        continue;
+      if (grid_node.size() != 2) {
+        throw std::runtime_error("Local grid must have two dimensions: chiplet=" + item.first);
       }
       boost::property_tree::ptree::const_iterator grid_it = grid_node.begin();
       grid.grid_x = grid_it->second.get_value<int>();
       ++grid_it;
       if (grid_it == grid_node.end()) {
-        continue;
+        throw std::runtime_error("Missing local grid height: chiplet=" + item.first);
       }
       grid.grid_y = grid_it->second.get_value<int>();
       if (grid.grid_x <= 0 || grid.grid_y <= 0 || grid.node_id_base < 0) {
-        std::cerr << "[MultiChipMesh] Ignoring invalid nonuniform grid for chip "
-                  << chip_id << ": " << grid.grid_x << "x" << grid.grid_y << std::endl;
-        continue;
+        throw std::runtime_error("Invalid nonuniform grid: chiplet=" + item.first);
       }
       chiplet_grids_[chip_id] = grid;
     }
   } catch (const std::exception& e) {
-    std::cerr << "[MultiChipMesh] Warning: failed to read nonuniform grid file "
-              << param->nonuniform_tier_grid_file << ": " << e.what() << std::endl;
-    chiplet_grids_.clear();
+    throw std::runtime_error("Nonuniform grid " + param->nonuniform_tier_grid_file + ": " + e.what());
   }
 
-  use_nonuniform_grid_ = !chiplet_grids_.empty();
+  if (chiplet_grids_.empty())
+    throw std::runtime_error("Required nonuniform grid has no chiplets");
+  use_nonuniform_grid_ = true;
   if (use_nonuniform_grid_) {
     std::cerr << "[MultiChipMesh] Loaded nonuniform active grids for "
               << chiplet_grids_.size() << " chiplets" << std::endl;
