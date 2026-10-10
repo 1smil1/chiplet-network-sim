@@ -1,0 +1,21 @@
+# ninja log v6
+85	8902	8132756432558672	CMakeFiles/ChipletNetworkSim.dir/src/topologies/multiple_chip_mesh.cpp.obj	a241e52091f3201f
+53	1574	8124189185327480	CMakeFiles/ChipletNetworkSim.dir/src/topologies/multiple_chip_torus.cpp.obj	63bc34153534d50f
+31	1114	8124197294896661	CMakeFiles/ChipletNetworkSim.dir/src/system.cpp.obj	e33d6852fc4f98f2
+31	2925	8124185911407519	CMakeFiles/ChipletNetworkSim.dir/src/config.cpp.obj	9afd721973ed6786
+57	7595	8130151862654584	CMakeFiles/ChipletNetworkSim.dir/src/main.cpp.obj	f74cfa53765c7492
+27	759	8124197294850819	CMakeFiles/ChipletNetworkSim.dir/src/packet.cpp.obj	8f21bf972ce587fd
+24	1123	8124189185035249	CMakeFiles/ChipletNetworkSim.dir/src/chip.cpp.obj	b2675c26f0e8c9f1
+57	1534	8124189185366189	CMakeFiles/ChipletNetworkSim.dir/src/topologies/single_chip_mesh.cpp.obj	82294c1379757729
+29	5343	8124189185083837	CMakeFiles/ChipletNetworkSim.dir/src/online_workload.cpp.obj	7a50641ed348e2f4
+45	1811	8124189185241203	CMakeFiles/ChipletNetworkSim.dir/src/topologies/dragonfly_sw.cpp.obj	e66f86e7c99266e3
+95	1115	8123915208772385	CMakeFiles/ChipletNetworkSim.dir/src/netrace/netrace.c.obj	99b789c4f6b6fe35
+8902	9434	8132756520727291	ChipletNetworkSim.exe	6210648587275014
+43	1884	8124189185217341	CMakeFiles/ChipletNetworkSim.dir/src/topologies/dragonfly_chiplet.cpp.obj	440031d57ea34479
+37	1578	8124185911465830	CMakeFiles/ChipletNetworkSim.dir/src/node.cpp.obj	6fbf000becb81265
+39	2073	8124189185186095	CMakeFiles/ChipletNetworkSim.dir/src/traffic_manager.cpp.obj	ead124d9da746963
+80	6623	8132756432508763	CMakeFiles/ChipletNetworkSim.dir/src/topologies/chip_mesh.cpp.obj	3993fc847e8db7ee
+21	1228	8124189185000214	CMakeFiles/ChipletNetworkSim.dir/src/buffer.cpp.obj	d56390b84f75dda3
+52	2945	8132766423902030	CMakeFiles/ChipletNetworkSim.dir/src/topologies/multiple_chip_mesh.cpp.obj	a241e52091f3201f
+46	4166	8132766423838282	CMakeFiles/ChipletNetworkSim.dir/src/main.cpp.obj	f74cfa53765c7492
+4167	4316	8132766465043594	ChipletNetworkSim.exe	6210648587275014
